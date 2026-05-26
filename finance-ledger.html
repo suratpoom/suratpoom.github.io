@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>บัญชีคู่ สุรัตน์ ณัฐณิชา v2.0</title>
+  <title>บัญชีคู่ สุรัตน์ ณัฐณิชา v2.1</title>
   <meta name="theme-color" content="#be185d">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -504,7 +504,7 @@
     position:absolute;bottom:60px;left:0;right:0;text-align:center;color:#fff;
   ">
     <div style="font-family:Outfit,sans-serif;font-size:26px;font-weight:900;letter-spacing:-0.5px;">บัญชีคู่<span style="color:#fce7f3;">·</span>สุรัตน์ ณัฐณิชา</div>
-    <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;margin-top:6px;opacity:0.75;">PERSONAL LEDGER · v2.0</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;margin-top:6px;opacity:0.75;">PERSONAL LEDGER · v2.1</div>
   </div>
 </div>
 
@@ -523,7 +523,7 @@
 <div class="user-modal-wrap" id="userModalWrap">
   <div class="user-modal">
     <div class="um-logo" style="font-size:20px;letter-spacing:-0.5px;">บัญชีคู่<span>·</span>สุรัตน์ ณัฐณิชา</div>
-    <div class="um-badge">Personal Ledger · v2.0</div>
+    <div class="um-badge">Personal Ledger · v2.1</div>
     <div class="um-title" style="margin-top:8px;">เข้าสู่ระบบ</div>
     <div class="um-desc">ใช้บัญชี Google ของคุณ</div>
     <div id="g_id_onload"
@@ -628,7 +628,7 @@
         <div class="user-chip-hint">กด logout</div>
       </div>
     </div>
-    <div class="v-badge">v2.0</div>
+    <div class="v-badge">v2.1</div>
   </div>
   </div>
 </header>
@@ -1000,6 +1000,16 @@ function todayStr() {
 }
 function pad(n) { return String(n).padStart(2,'0'); }
 function toSheetDate(s) { return s.replace(/-/g,'/'); }
+function driveUrl(url, size) {
+  if (!url) return '';
+  if (url.startsWith('data:')) return url;
+  let id = '';
+  let m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (m) id = m[1];
+  else { m = url.match(/\/(?:d|file\/d)\/([a-zA-Z0-9_-]+)/); if (m) id = m[1]; }
+  if (!id) return url;
+  return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + (size || 1200);
+}
 function monthKey(s) { return (s||'').replace(/-/g,'/').slice(0,7); }
 function thaiMonth(key) {
   // "2025/05" → "05/2025"
@@ -1374,7 +1384,7 @@ function cardHTML(r,i) {
   const rec=r['ผู้บันทึก']||'';
   return `<div class="d-card">
     <button class="card-menu" onclick="event.stopPropagation();openEditModal(${i})" title="แก้ไข">⋮</button>
-    ${hasImg?`<img class="d-img" src="${esc(url)}" loading="lazy" alt="" onclick="openLB(${i})" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="d-noimg" style="display:none" onclick="openLB(${i})">${isIn?'💰':'🧾'}</div>`:`<div class="d-noimg" onclick="openEditModal(${i})">${isIn?'💰':'🧾'}</div>`}
+    ${hasImg?`<img class="d-img" src="${esc(driveUrl(url,800))}" loading="lazy" alt="" onclick="openLB(${i})" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="d-noimg" style="display:none" onclick="openLB(${i})">${isIn?'💰':'🧾'}</div>`:`<div class="d-noimg" onclick="openEditModal(${i})">${isIn?'💰':'🧾'}</div>`}
     <div class="d-body" onclick="openEditModal(${i})">
       <div class="d-title">${esc(r['ชื่อเรื่อง'])}</div>
       <div class="d-amount" style="color:${isIn?'var(--income)':'var(--expense)'}">${isIn?'+':'-'}฿${fmt(+r['ยอดเงิน'])}</div>
@@ -1396,7 +1406,7 @@ function listHTML(r,i) {
   const recColor=Object.values(USERS).find(u=>u.name===rec)?.color||'var(--sub)';
   return `<div class="d-list-item">
     <div class="d-thumb" style="background:${isIn?'var(--income-d)':'var(--expense-d)'}" onclick="openLB(${i})">
-      ${hasImg?`<img src="${esc(url)}" loading="lazy" alt="" onerror="this.parentNode.innerHTML='${isIn?'💰':'🧾'}';">`:(isIn?'💰':'🧾')}
+      ${hasImg?`<img src="${esc(driveUrl(url,400))}" loading="lazy" alt="" onerror="this.parentNode.innerHTML='${isIn?'💰':'🧾'}';">`:(isIn?'💰':'🧾')}
     </div>
     <div style="flex:1;min-width:0;" onclick="openEditModal(${i})">
       <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r['ชื่อเรื่อง'])}</div>
@@ -1498,7 +1508,7 @@ function openEditModal(i) {
   const emptyEl  = document.getElementById('eImgEmpty');
   const delBtn   = document.getElementById('eImgDelBtn');
   if (eImgCurrentUrl && eImgCurrentUrl.length > 8) {
-    imgEl.src = eImgCurrentUrl;
+    imgEl.src = driveUrl(eImgCurrentUrl, 800);
     imgEl.style.display = 'block';
     emptyEl.style.display = 'none';
     delBtn.style.display = '';
@@ -1665,7 +1675,7 @@ async function doDelete() {
 /* ══════════════════════════════════════════════
    LIGHTBOX
 ══════════════════════════════════════════════ */
-function openLB(i) { const url=imgUrls[i]||''; if(!url||url.length<8) return; document.getElementById('lbImg').src=url; document.getElementById('lightbox').classList.add('show'); }
+function openLB(i) { const url=imgUrls[i]||''; if(!url||url.length<8) return; document.getElementById('lbImg').src=driveUrl(url,2000); document.getElementById('lightbox').classList.add('show'); }
 function closeLB() { document.getElementById('lightbox').classList.remove('show'); document.getElementById('lbImg').src=''; }
 
 /* ══════════════════════════════════════════════
