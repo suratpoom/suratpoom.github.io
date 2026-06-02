@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>บัญชีคู่ สุรัตน์ ณัฐณิชา v2.2</title>
+  <title>บัญชีคู่ สุรัตน์ ณัฐณิชา v2.3</title>
   <meta name="theme-color" content="#be185d">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -504,7 +504,7 @@
     position:absolute;bottom:60px;left:0;right:0;text-align:center;color:#fff;
   ">
     <div style="font-family:Outfit,sans-serif;font-size:26px;font-weight:900;letter-spacing:-0.5px;">บัญชีคู่<span style="color:#fce7f3;">·</span>สุรัตน์ ณัฐณิชา</div>
-    <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;margin-top:6px;opacity:0.75;">PERSONAL LEDGER · v2.2</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;margin-top:6px;opacity:0.75;">PERSONAL LEDGER · v2.3</div>
   </div>
 </div>
 
@@ -526,7 +526,7 @@
 <div class="user-modal-wrap" id="userModalWrap">
   <div class="user-modal">
     <div class="um-logo" style="font-size:20px;letter-spacing:-0.5px;">บัญชีคู่<span>·</span>สุรัตน์ ณัฐณิชา</div>
-    <div class="um-badge">Personal Ledger · v2.2</div>
+    <div class="um-badge">Personal Ledger · v2.3</div>
     <div class="um-title" style="margin-top:8px;">เข้าสู่ระบบ</div>
     <div class="um-desc">ใช้บัญชี Google ของคุณ</div>
     <div id="g_id_onload"
@@ -631,7 +631,7 @@
         <div class="user-chip-hint">กด logout</div>
       </div>
     </div>
-    <div class="v-badge">v2.2</div>
+    <div class="v-badge">v2.3</div>
   </div>
   </div>
 </header>
@@ -1213,10 +1213,18 @@ function rmImg(e) {
 function renderDash() {
   const selM = document.getElementById('dMonth').value;
   const selA = document.getElementById('dAcc').value;
+
+  // Month activity: respects both month + account filters
   let f = txData;
   if(selA) f=f.filter(r=>r['บัญชี']===selA);
   if(selM) f=f.filter(r=>monthKey(r['วันที่รายการ'])===selM);
-  const inc=sum(f,'เงินเข้า'), exp=sum(f,'เงินออก'), bal=inc-exp;
+  const inc=sum(f,'เงินเข้า'), exp=sum(f,'เงินออก');
+
+  // Cumulative balance: respects only the account filter (ignores month)
+  // so users see actual money on hand, not just this month's net.
+  const allF = selA ? txData.filter(r=>r['บัญชี']===selA) : txData;
+  const totalInc=sum(allF,'เงินเข้า'), totalExp=sum(allF,'เงินออก');
+  const bal = totalInc - totalExp;
 
   document.getElementById('kpiGrid').innerHTML=`
     <div class="kpi kpi-in">
@@ -1229,10 +1237,10 @@ function renderDash() {
       <div class="kpi-val num">฿${fmt(exp)}</div>
       <div class="kpi-cnt">${f.filter(r=>r['ประเภท']==='เงินออก').length} รายการ</div>
     </div>
-    <div class="kpi kpi-bal kpi-bal">
-      <div class="kpi-lbl">คงเหลือ</div>
-      <div class="kpi-val num">${bal>=0?'+':''}฿${fmt(Math.abs(bal))}</div>
-      <div class="kpi-cnt">${f.length} รายการทั้งหมด</div>
+    <div class="kpi kpi-bal">
+      <div class="kpi-lbl">คงเหลือ <span style="font-size:10px;font-weight:400;opacity:0.65;">(ตลอดเวลา)</span></div>
+      <div class="kpi-val num">${bal<0?'-':'+'}฿${fmt(Math.abs(bal))}</div>
+      <div class="kpi-cnt">${allF.length} รายการรวม</div>
     </div>`;
 
   renderBar(selA);
