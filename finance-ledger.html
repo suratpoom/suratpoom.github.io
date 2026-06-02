@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>บัญชีคู่ สุรัตน์ ณัฐณิชา v2.3</title>
+  <title>บัญชีคู่ สุรัตน์ ณัฐณิชา v2.4</title>
   <meta name="theme-color" content="#be185d">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -504,7 +504,7 @@
     position:absolute;bottom:60px;left:0;right:0;text-align:center;color:#fff;
   ">
     <div style="font-family:Outfit,sans-serif;font-size:26px;font-weight:900;letter-spacing:-0.5px;">บัญชีคู่<span style="color:#fce7f3;">·</span>สุรัตน์ ณัฐณิชา</div>
-    <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;margin-top:6px;opacity:0.75;">PERSONAL LEDGER · v2.3</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;margin-top:6px;opacity:0.75;">PERSONAL LEDGER · v2.4</div>
   </div>
 </div>
 
@@ -526,7 +526,7 @@
 <div class="user-modal-wrap" id="userModalWrap">
   <div class="user-modal">
     <div class="um-logo" style="font-size:20px;letter-spacing:-0.5px;">บัญชีคู่<span>·</span>สุรัตน์ ณัฐณิชา</div>
-    <div class="um-badge">Personal Ledger · v2.3</div>
+    <div class="um-badge">Personal Ledger · v2.4</div>
     <div class="um-title" style="margin-top:8px;">เข้าสู่ระบบ</div>
     <div class="um-desc">ใช้บัญชี Google ของคุณ</div>
     <div id="g_id_onload"
@@ -631,7 +631,7 @@
         <div class="user-chip-hint">กด logout</div>
       </div>
     </div>
-    <div class="v-badge">v2.3</div>
+    <div class="v-badge">v2.4</div>
   </div>
   </div>
 </header>
@@ -738,7 +738,13 @@
     </div>
     <div class="kpi-grid" id="kpiGrid"></div>
     <div class="chart-card">
-      <div class="chart-title">รายเดือน — เงินเข้า vs เงินออก (6 เดือน)</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        <div class="chart-title" style="margin:0;">รายเดือน — เงินเข้า vs เงินออก (6 เดือน)</div>
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sub);cursor:pointer;user-select:none;">
+          <input type="checkbox" id="chartExOpen" onchange="renderDash()" style="margin:0;cursor:pointer;width:14px;height:14px;accent-color:var(--bee);">
+          ไม่รวมยอดเปิด
+        </label>
+      </div>
       <div class="chart-wrap"><canvas id="barChart" style="max-height:220px;"></canvas></div>
     </div>
     <div class="chart-card mt">
@@ -1213,6 +1219,7 @@ function rmImg(e) {
 function renderDash() {
   const selM = document.getElementById('dMonth').value;
   const selA = document.getElementById('dAcc').value;
+  const exOpen = document.getElementById('chartExOpen')?.checked;
 
   // Month activity: respects both month + account filters
   let f = txData;
@@ -1225,6 +1232,10 @@ function renderDash() {
   const allF = selA ? txData.filter(r=>r['บัญชี']===selA) : txData;
   const totalInc=sum(allF,'เงินเข้า'), totalExp=sum(allF,'เงินออก');
   const bal = totalInc - totalExp;
+
+  // Single biggest income record within current account filter — used as the
+  // "opening balance" when the user wants to mute it in the chart/sparkline.
+  const exTs = exOpen ? findOpeningBalanceTs(selA) : null;
 
   document.getElementById('kpiGrid').innerHTML=`
     <div class="kpi kpi-in">
@@ -1241,15 +1252,81 @@ function renderDash() {
       <div class="kpi-lbl">คงเหลือ <span style="font-size:10px;font-weight:400;opacity:0.65;">(ตลอดเวลา)</span></div>
       <div class="kpi-val num">${bal<0?'-':'+'}฿${fmt(Math.abs(bal))}</div>
       <div class="kpi-cnt">${allF.length} รายการรวม</div>
+      <div style="height:30px;margin-top:8px;position:relative;"><canvas id="balSpark"></canvas></div>
     </div>`;
 
-  renderBar(selA);
+  renderBar(selA, exTs);
+  renderBalSpark(allF, exTs);
   renderAccBreak();
   renderDonut(f);
   renderRecent(f);
 }
 
-function renderBar(accFilter) {
+// Find Timestamp of the single largest income record in scope (account filter).
+// Used to mute the "opening deposit" outlier in the bar chart and sparkline.
+function findOpeningBalanceTs(accFilter) {
+  let maxAmt = 0, maxTs = null;
+  for (const r of txData) {
+    if (r['ประเภท'] !== 'เงินเข้า') continue;
+    if (accFilter && r['บัญชี'] !== accFilter) continue;
+    const amt = +r['ยอดเงิน'] || 0;
+    if (amt > maxAmt) { maxAmt = amt; maxTs = r.Timestamp; }
+  }
+  return maxTs;
+}
+
+// Running balance at end of each of the last 6 months (oldest → newest).
+function balanceTrend6m(rows, excludeTs) {
+  const now = new Date();
+  return Array.from({length:6}, (_, i) => {
+    // first day of the month AFTER the target month → "everything strictly before this"
+    const cutoff = new Date(now.getFullYear(), now.getMonth()-(5-i)+1, 1);
+    let bal = 0;
+    for (const r of rows) {
+      if (excludeTs && r.Timestamp === excludeTs) continue;
+      const dt = new Date(String(r['วันที่รายการ']||'').replace(/\//g,'-'));
+      if (isNaN(dt) || dt >= cutoff) continue;
+      const amt = +r['ยอดเงิน'] || 0;
+      bal += (r['ประเภท']==='เงินเข้า' ? amt : -amt);
+    }
+    return bal;
+  });
+}
+
+let sparkInst = null;
+function renderBalSpark(rows, excludeTs) {
+  const canvas = document.getElementById('balSpark');
+  if (!canvas) return;
+  const data = balanceTrend6m(rows, excludeTs);
+  const now = new Date();
+  const labels = Array.from({length:6}, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth()-(5-i), 1);
+    return thaiMonth(`${d.getFullYear()}/${pad(d.getMonth()+1)}`);
+  });
+  if (sparkInst) sparkInst.destroy();
+  sparkInst = new Chart(canvas, {
+    type: 'line',
+    data: { labels, datasets: [{
+      data,
+      borderColor: '#9d174d',
+      backgroundColor: 'rgba(157,23,77,0.18)',
+      fill: true, tension: 0.35,
+      borderWidth: 1.6, pointRadius: 0,
+      pointHoverRadius: 4, pointHoverBackgroundColor: '#9d174d'
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => ` ฿${fmt(c.raw)}` } }
+      },
+      scales: { x: { display: false }, y: { display: false } },
+      elements: { line: { borderJoinStyle: 'round' } }
+    }
+  });
+}
+
+function renderBar(accFilter, excludeTs) {
   const now=new Date(), labels=[], incArr=[], expArr=[];
   for(let i=5;i>=0;i--){
     const d=new Date(now.getFullYear(),now.getMonth()-i,1);
@@ -1257,6 +1334,7 @@ function renderBar(accFilter) {
     labels.push(thaiMonth(key));
     let rows=txData.filter(r=>monthKey(r['วันที่รายการ'])===key);
     if(accFilter) rows=rows.filter(r=>r['บัญชี']===accFilter);
+    if(excludeTs) rows=rows.filter(r=>r.Timestamp!==excludeTs);
     incArr.push(sum(rows,'เงินเข้า'));
     expArr.push(sum(rows,'เงินออก'));
   }
