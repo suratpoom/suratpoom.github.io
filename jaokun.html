@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#1b1040">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>เจ้าคุณ v1.4 — เกมคิดเลขจับมือ</title>
+<title>เจ้าคุณ v1.5 — เกมคิดเลขจับมือ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Thai+2:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -296,7 +296,7 @@ input{font:inherit}
   </div>
 
   <p class="note">ยืนห่างจอประมาณหนึ่งช่วงแขน แล้วยกมือขึ้นให้กล้องเห็น</p>
-  <p class="ver">เจ้าคุณ v1.4 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
+  <p class="ver">เจ้าคุณ v1.5 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
 
  </div></div>
 </section>
@@ -381,10 +381,10 @@ input{font:inherit}
 
 <script type="module">
 /* ═══════════════════════════════════════════════
-   เจ้าคุณ v1.4 — เกมคิดเลขจับมือด้วยกล้อง
+   เจ้าคุณ v1.5 — เกมคิดเลขจับมือด้วยกล้อง
    ═══════════════════════════════════════════════ */
 
-const VERSION = 'v1.4';
+const VERSION = 'v1.5';
 
 /* URL ของ Apps Script (/exec) — เปลี่ยนได้ที่ปุ่ม "ตั้งค่าที่เก็บคะแนน" ในแอป */
 const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzx7tZYRunES9Gfi0zOIb0Amz-kzp_LMdFhQzgJetRychRwso_vFuleXi0nbPdGjT5r/exec';
@@ -602,8 +602,8 @@ try{ document.fonts.ready.then(() => { if(S.screen==='play') resize(); }); }catc
 /* ═══════════ กล้อง + จับมือ ═══════════ */
 const video = $('#cam');
 let stream = null, landmarker = null, lastVideoTime = -1, lastDetect = 0, camStuckAt = 0;
-let worker = null, workerOK = false, workerBusy = false;
-let fpsN = 0, fpsAt = 0, fpsVal = 0, detMs = 0;
+let worker = null, workerOK = false, workerBusy = false, workerSentAt = 0;
+let fpsN = 0, fpsAt = 0, fpsVal = 0, detMs = 0, frameGap = 0;
 
 const once = (ms, arm) => new Promise(res => {
   let done = false;
@@ -749,9 +749,9 @@ async function loadHands(){
 }
 
 function onWorkerMsg(ev){
+  workerBusy = false;                            // เคลียร์ทุกข้อความ ไม่ใช่เฉพาะ result
   const m = ev.data;
   if(!m || m.type !== 'result') return;
-  workerBusy = false;
   detMs = detMs ? detMs*.8 + m.ms*.2 : m.ms;
   const now = performance.now();
   if(!m.lm){ if(now - S.lastHand > 900) S.ptr = null; return; }
@@ -800,8 +800,10 @@ function detectHand(now){
   lastVideoTime = video.currentTime; lastDetect = now;
 
   if(workerOK){
-    if(workerBusy) return;                       // ส่งทีละเฟรม ไม่ให้คิวบวม
-    workerBusy = true;
+    /* กันค้าง: ถ้าส่งไปแล้วไม่มีคำตอบกลับมาเกิน 2 วิ ถือว่าเฟรมนั้นหาย ปล่อยให้ส่งใหม่
+       ไม่งั้น workerBusy ค้างเป็น true ตลอด = ไม่ส่งเฟรมอีกเลย = มือตายสนิท */
+    if(workerBusy && now - workerSentAt < 2000) return;
+    workerBusy = true; workerSentAt = now;
     createImageBitmap(video)
       .then(bm => { try{ worker.postMessage({ type:'frame', bitmap:bm, ts:now }, [bm]); }
                     catch{ workerBusy = false; try{ bm.close(); }catch{} } })
@@ -836,12 +838,16 @@ function applyLandmarks(lm, now){
   const prev = S.ptr;
   const gap  = now - (S.ptrAt || now);
   /* มือหลุดไปแป๊บนึงแล้วโผล่มาใหม่คนละที่ = "เจอมือใหม่" ไม่ใช่ "ฟันเร็ว"
-     ถ้าไม่กัน จะกลายเป็นฟันโดนคำตอบมั่วเองตอนมือหายแล้วกลับมา */
+     ⚠️ เกณฑ์เวลาต้องปรับตามความเร็วเครื่อง ห้าม fix ที่ 130ms
+     เครื่องช้าที่ตรวจเฟรมละ 150ms จะเข้าเงื่อนไข "เจอมือใหม่" ทุกเฟรม
+     -> pv=0 ตลอด + รอยมือถูกล้างตลอด = โหมดหั่นมือไม่มีวันติด (บั๊คจริง) */
+  frameGap = frameGap ? frameGap*.8 + gap*.2 : gap;
+  const gapLimit = clamp(frameGap*3.5, 180, 700);
   const jump = prev ? Math.hypot(nx-prev.x, ny-prev.y) : 0;
-  const reacquired = !prev || gap > 130 || jump > Math.min(CW,CH)*0.45;
+  const reacquired = !prev || gap > gapLimit || jump > Math.min(CW,CH)*0.55;
 
   if(reacquired){
-    S.ptr = { x:nx, y:ny }; S.pprev = { x:nx, y:ny }; S.pv = 0; S.trail.length = 0;
+    S.ptr = { x:nx, y:ny }; S.pprev = { x:nx, y:ny }; S.pv = 0;
   }else{
     const sx = prev.x + (nx-prev.x)*CFG.SMOOTH, sy = prev.y + (ny-prev.y)*CFG.SMOOTH;
     const dt = Math.max(8, gap);
@@ -1241,14 +1247,18 @@ function loop(now){
   drawPointer(now);
   drawPraise(now);
 
-  /* วัดความลื่น: fps ของเกม + เวลาที่ตัวจับมือใช้ต่อเฟรม */
+  /* วัดความลื่น + บอกสถานะให้เห็นด้วยตา ว่าติดตรงไหน */
   fpsN++;
   if(now - fpsAt > 500){
     fpsVal = Math.round(fpsN*1000/(now-fpsAt)); fpsN = 0; fpsAt = now;
-    if(S.running && useCam() && S.camOn){
+    if(S.running && useCam()){
       const dg = $('#diagTag');
       dg.classList.add('on');
-      dg.textContent = `${fpsVal} fps · มือ ${Math.round(detMs)} ms · ${workerOK ? 'worker' : 'main'}`;
+      const eng  = workerOK ? 'W' : (landmarker ? 'M' : '–');
+      const hand = !S.camOn ? 'กล้องไม่ติด'
+                 : (now - S.lastHand < 700) ? 'มือ:เจอ'
+                 : (S.handSeen ? 'มือ:หลุด' : 'มือ:ยังไม่เจอ');
+      dg.textContent = `${fpsVal}fps · ${Math.round(detMs)}ms · ${eng} · ${hand}`;
     }
   }
 
@@ -1298,8 +1308,14 @@ async function start(){
       await loadHands();
     }catch(e){
       S.camFail = true; stopCam();
-      $('#loadSub').textContent = 'เปิดกล้องไม่ได้ — เล่นด้วยการแตะที่ตัวเลขแทนนะ';
-      await new Promise(r => setTimeout(r, 1400));
+      const why = String((e && (e.name || e.message)) || e);
+      $('#loadTxt').textContent = 'เปิดกล้องไม่ได้';
+      $('#loadSub').textContent =
+        /NotAllowed|Permission/i.test(why) ? 'เบราว์เซอร์ไม่อนุญาตให้ใช้กล้อง — กดรูปกล้องบนแถบที่อยู่เว็บแล้วเลือก "อนุญาต"'
+      : /NotFound|Devices/i.test(why)     ? 'หากล้องไม่เจอ — เช็คว่ามีกล้องต่ออยู่ไหม'
+      : /NotReadable|Track/i.test(why)    ? 'กล้องถูกโปรแกรมอื่นใช้อยู่ — ปิด Zoom / Meet / Line แล้วลองใหม่'
+      :                                     'เล่นด้วยการแตะที่ตัวเลขแทนไปก่อนนะ (' + why.slice(0,40) + ')';
+      await new Promise(r => setTimeout(r, 2600));
     }
     if(tk !== runToken) return;              // ผู้เล่นกดออกระหว่างโหลด
     $('#loadBox').classList.add('off');
@@ -1475,7 +1491,17 @@ function paintChips(){
   $$('#cntChips .chip').forEach(c => c.setAttribute('aria-pressed', +c.dataset.c === S.count));
   $('#mCount').textContent = `${S.modes.length} แบบ`;
 
-  $$('#playChips .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.p === S.play));
+  const camOK = window.isSecureContext && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  $$('#playChips .chip').forEach(c => {
+    c.setAttribute('aria-pressed', c.dataset.p === S.play);
+    const needCam = c.dataset.p !== 'tap';
+    c.disabled = needCam && !camOK;
+    c.title = (needCam && !camOK)
+      ? 'ใช้ไม่ได้เพราะหน้านี้ไม่ได้เปิดผ่าน https — เปิดจากลิงก์ suratpoom.github.io หรือดับเบิลคลิก เล่นเกมเจ้าคุณ.bat'
+      : c.dataset.p === 'hold' ? 'เอามือไปวางทับคำตอบ ค้างไว้จนวงแหวนเต็ม'
+      : c.dataset.p === 'slash' ? 'ทำมือตั้ง ฟันผ่านคำตอบ'
+      : 'ไม่ใช้กล้อง แตะตัวเลขบนจอ';
+  });
 
   const vc = $('#voxChip');
   if(!voTH){                                   // ไม่มีเสียงไทย = ปิดตาย ไม่ปล่อยให้ฝรั่งอ่านไทย
@@ -1618,10 +1644,16 @@ document.addEventListener('visibilitychange', () => {
 /* ---------- boot ---------- */
 $('#pname').value = S.name;
 paintChips();
-if(!window.isSecureContext){
+/* เปิดไฟล์ตรงๆ (file://) เบราว์เซอร์จะไม่ให้แตะกล้องเลย — ต้องบอกให้ชัดว่าทำไม
+   ไม่งั้นจะงงว่า "ทำไมกดลากมือ/หั่นมือไม่ได้ ได้แต่แตะจอ" */
+if(!window.isSecureContext || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){
   const w = $('#secWarn'); w.hidden = false;
-  w.textContent = 'หน้านี้ไม่ได้เปิดผ่าน https หรือ localhost — เบราว์เซอร์จะไม่ให้ใช้กล้อง เล่นแบบแตะจอได้ตามปกติ';
-  S.play = 'tap'; LS.set('play','tap'); paintChips();
+  w.innerHTML = '<b>โหมดลากมือ / หั่นมือ ใช้ไม่ได้ตอนนี้</b><br>' +
+    'เพราะหน้านี้เปิดจากไฟล์ในเครื่องตรงๆ เบราว์เซอร์เลยไม่ให้ใช้กล้อง<br>' +
+    'เล่นเต็มรูปแบบได้ที่ <b>suratpoom.github.io/jaokun.html</b> ' +
+    'หรือดับเบิลคลิก <b>เล่นเกมเจ้าคุณ.bat</b>';
+  S.play = 'tap';
+  paintChips();
 }
 </script>
 </body>
