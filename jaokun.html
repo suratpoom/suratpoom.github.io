@@ -5,7 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#1b1040">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>เจ้าคุณ v1.6 — เกมคิดเลขจับมือ</title>
+<meta name="apple-mobile-web-app-title" content="เจ้าคุณ">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="jaokun.webmanifest">
+<link rel="apple-touch-icon" href="jaokun-icon-180.png">
+<title>เจ้าคุณ v1.7 — เกมคิดเลขจับมือ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Thai+2:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -199,6 +203,17 @@ input{font:inherit}
 .rank .pt{font-size:21px;font-weight:800;color:var(--gold);flex:0 0 auto}
 .empty{text-align:center;color:var(--dim);padding:36px 12px;font-size:16px;line-height:1.6}
 
+/* ---------- กราฟสถิติรายวัน ---------- */
+.chart{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px 12px 10px;margin-bottom:12px}
+.chart h3{margin:0 0 12px;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bars{display:flex;align-items:flex-end;gap:6px;height:158px}
+.barCol{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%}
+.barV{font-size:11px;font-weight:800;color:var(--c2a);white-space:nowrap;line-height:1}
+.bar{width:100%;max-width:34px;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,var(--c2a),var(--c2b));box-shadow:0 3px 8px rgba(0,0,0,.3)}
+.barCol.today .bar{background:linear-gradient(180deg,#FFD766,var(--goldD))}
+.barCol.today .barV{color:var(--gold)}
+.barD{font-size:10.5px;color:var(--dim);font-weight:700;white-space:nowrap;line-height:1}
+
 /* ---------- modal ---------- */
 .mask{position:fixed;inset:0;z-index:var(--z-modal);background:rgba(4,2,14,.8);
   display:none;align-items:center;justify-content:center;padding:18px}
@@ -291,13 +306,14 @@ input{font:inherit}
   <div style="margin-top:14px">
     <button class="btn go" id="btnStart">เริ่มเล่น</button>
     <div class="row2">
-      <button class="btn ghost mini" id="btnBoard">ตารางคะแนน</button>
+      <button class="btn ghost mini" id="btnBoard">อันดับ</button>
+      <button class="btn ghost mini" id="btnStats">สถิติ</button>
       <button class="btn ghost mini" id="btnHow">วิธีเล่น</button>
     </div>
   </div>
 
   <p class="note">ยืนห่างจอประมาณหนึ่งช่วงแขน แล้วยกมือขึ้นให้กล้องเห็น</p>
-  <p class="ver">เจ้าคุณ v1.6 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
+  <p class="ver">เจ้าคุณ v1.7 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
 
  </div></div>
 </section>
@@ -359,7 +375,8 @@ input{font:inherit}
   <div style="margin-top:18px">
     <button class="btn ok2" id="btnAgain">เล่นอีกครั้ง</button>
     <div class="row2">
-      <button class="btn ghost mini" id="btnBoard2">ตารางคะแนน</button>
+      <button class="btn ghost mini" id="btnBoard2">อันดับ</button>
+      <button class="btn ghost mini" id="btnStats2">สถิติ</button>
       <button class="btn ghost mini" id="btnHome">หน้าแรก</button>
     </div>
   </div>
@@ -376,16 +393,26 @@ input{font:inherit}
   <div class="scroll"><div class="wrap" id="boardList"></div></div>
 </section>
 
+<!-- ══════════ สถิติรายวัน ══════════ -->
+<section id="stats" class="screen">
+  <div class="bhead">
+    <button class="iconBtn" id="btnBackS" aria-label="กลับ">&#8592;</button>
+    <h2>สถิติของเจ้าคุณ</h2>
+    <button class="iconBtn" id="btnReloadS" aria-label="โหลดใหม่">&#8635;</button>
+  </div>
+  <div class="scroll"><div class="wrap" id="statsBody"></div></div>
+</section>
+
 <!-- ══════════ modal ══════════ -->
 <div class="mask" id="mask"><div class="modal" id="modal"></div></div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
 /* ═══════════════════════════════════════════════
-   เจ้าคุณ v1.6 — เกมคิดเลขจับมือด้วยกล้อง
+   เจ้าคุณ v1.7 — เกมคิดเลขจับมือด้วยกล้อง
    ═══════════════════════════════════════════════ */
 
-const VERSION = 'v1.6';
+const VERSION = 'v1.7';
 
 /* URL ของ Apps Script (/exec) — เปลี่ยนได้ที่ปุ่ม "ตั้งค่าที่เก็บคะแนน" ในแอป */
 const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzx7tZYRunES9Gfi0zOIb0Amz-kzp_LMdFhQzgJetRychRwso_vFuleXi0nbPdGjT5r/exec';
@@ -1526,6 +1553,66 @@ async function loadBoard(){
 }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+/* ═══════════ สถิติรายวัน — วิ/ข้อ ยิ่งเตี้ยยิ่งไว ═══════════ */
+async function loadStats(){
+  const host = $('#statsBody');
+  host.innerHTML = '<div class="empty">กำลังโหลด…</div>';
+
+  let days = null, src = 'Google Sheet';
+  if(S.gas){
+    try{
+      const r = await fetch(S.gas + (S.gas.includes('?')?'&':'?') + 'action=daily');
+      const j = await r.json();
+      if(j && j.ok && Array.isArray(j.days) && j.days.length) days = j.days;
+    }catch{}
+  }
+  if(!days){                                   // ชีทว่าง/ต่อไม่ได้ -> รวมจากในเครื่อง
+    const map = {};
+    for(const r of localBoard()){
+      const d = (r.at||'').slice(0,10);
+      if(!d) continue;
+      const m = map[d] || (map[d] = { n:0, sum:0, best:0, score:0 });
+      m.n++;
+      if(+r.avg > 0) m.sum += +r.avg;
+      if(+r.best > 0) m.best = m.best ? Math.min(m.best, +r.best) : +r.best;
+      if(+r.score > m.score) m.score = +r.score;
+    }
+    days = Object.keys(map).sort().map(d => ({
+      d, rounds:map[d].n,
+      avg: map[d].n ? Math.round(map[d].sum/map[d].n*10)/10 : 0,
+      best: Math.round(map[d].best*10)/10,
+      score: map[d].score,
+    }));
+    src = 'เครื่องนี้';
+  }
+  if(!days.length){
+    host.innerHTML = '<div class="empty">ยังไม่มีข้อมูลเลย<br>เล่นสักรอบก่อนนะ</div>';
+    return;
+  }
+
+  const last = days.slice(-10);                             // กราฟ 10 วันล่าสุด วันเก่า -> ใหม่
+  const today = new Date(Date.now() + 7*3600*1000).toISOString().slice(0,10);   // Asia/Bangkok
+  const mx = Math.max(...last.map(x => x.avg || 0), 1);
+  const bars = last.map(x => `
+    <div class="barCol ${x.d === today ? 'today' : ''}" title="${x.d} · เล่น ${x.rounds} รอบ">
+      <span class="barV">${x.avg || '–'}</span>
+      <div class="bar" style="height:${clamp(Math.round((x.avg||0)/mx*118), 6, 118)}px"></div>
+      <span class="barD">${x.d.slice(5)}</span>
+    </div>`).join('');
+
+  host.innerHTML =
+    `<p class="note" style="margin:0 0 10px">ข้อมูลจาก ${src} · แท่งยิ่งเตี้ย = คิดเลขยิ่งไว</p>` +
+    `<div class="chart"><h3>วิ/ข้อ เฉลี่ยรายวัน</h3><div class="bars">${bars}</div></div>` +
+    [...days].reverse().slice(0,30).map(x => `
+      <div class="rank">
+        <div class="who">
+          <div class="nm">${x.d === today ? 'วันนี้' : x.d}</div>
+          <div class="mt">เล่น ${x.rounds} รอบ · เฉลี่ย ${x.avg || '–'} วิ/ข้อ · ไวสุด ${x.best || '–'} วิ</div>
+        </div>
+        <div class="pt">${x.score}</div>
+      </div>`).join('');
+}
+
 /* ═══════════ UI ═══════════ */
 function show(id){
   $$('.screen').forEach(s => s.classList.toggle('on', s.id === id));
@@ -1598,10 +1685,19 @@ $('#btnStart').addEventListener('click', start);
 $('#btnQuit').addEventListener('click', quit);
 $('#btnAgain').addEventListener('click', start);
 $('#btnHome').addEventListener('click', () => show('home'));
-$('#btnBack').addEventListener('click', () => show(S.screen === 'board' && S.idx >= CFG.ROUND ? 'result' : 'home'));
-$('#btnBoard').addEventListener('click', () => { show('board'); loadBoard(); });
-$('#btnBoard2').addEventListener('click', () => { show('board'); loadBoard(); });
+
+/* จำว่ามาจากหน้าไหน กดกลับแล้วไปถูกที่ */
+const goBoard = () => { S.navFrom = S.screen; show('board'); loadBoard(); };
+const goStats = () => { S.navFrom = S.screen; show('stats'); loadStats(); };
+const goBack  = () => show(S.navFrom === 'result' ? 'result' : 'home');
+$('#btnBoard').addEventListener('click', goBoard);
+$('#btnBoard2').addEventListener('click', goBoard);
+$('#btnStats').addEventListener('click', goStats);
+$('#btnStats2').addEventListener('click', goStats);
+$('#btnBack').addEventListener('click', goBack);
+$('#btnBackS').addEventListener('click', goBack);
 $('#btnReload').addEventListener('click', loadBoard);
+$('#btnReloadS').addEventListener('click', loadStats);
 $('#btnSpk').addEventListener('click', () => { S.useVox = true; LS.set('useVox',true); sayQ(); });
 
 $('#btnHow').addEventListener('click', () => modal(`
