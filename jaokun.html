@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#1b1040">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>เจ้าคุณ v1.5 — เกมคิดเลขจับมือ</title>
+<title>เจ้าคุณ v1.6 — เกมคิดเลขจับมือ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Thai+2:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -256,10 +256,11 @@ input{font:inherit}
 
   <div class="card">
     <p class="lbl">ระดับความยาก</p>
-    <div class="chips" id="lvChips">
-      <button class="chip lv" data-l="easy" aria-pressed="true">ง่าย</button>
-      <button class="chip lv" data-l="mid" aria-pressed="false">กลาง</button>
-      <button class="chip lv" data-l="hard" aria-pressed="false">ยาก</button>
+    <div class="chips four" id="lvChips">
+      <button class="chip lv" data-l="1" aria-pressed="true"  title="ง่ายสุด เลขไม่เกิน 10 คูณหารแม่ 1-5"><span class="op">1</span></button>
+      <button class="chip lv" data-l="2" aria-pressed="false" title="บวกลบไม่เกิน 30 คูณหารไม่เกินแม่ 3"><span class="op">2</span></button>
+      <button class="chip lv" data-l="3" aria-pressed="false" title="บวกลบถึง 100 คูณหารแม่ 2-9"><span class="op">3</span></button>
+      <button class="chip lv" data-l="4" aria-pressed="false" title="ยากสุด เลขหลักร้อย คูณเลขสองหลัก"><span class="op">4</span></button>
     </div>
   </div>
 
@@ -296,7 +297,7 @@ input{font:inherit}
   </div>
 
   <p class="note">ยืนห่างจอประมาณหนึ่งช่วงแขน แล้วยกมือขึ้นให้กล้องเห็น</p>
-  <p class="ver">เจ้าคุณ v1.5 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
+  <p class="ver">เจ้าคุณ v1.6 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
 
  </div></div>
 </section>
@@ -381,10 +382,10 @@ input{font:inherit}
 
 <script type="module">
 /* ═══════════════════════════════════════════════
-   เจ้าคุณ v1.5 — เกมคิดเลขจับมือด้วยกล้อง
+   เจ้าคุณ v1.6 — เกมคิดเลขจับมือด้วยกล้อง
    ═══════════════════════════════════════════════ */
 
-const VERSION = 'v1.5';
+const VERSION = 'v1.6';
 
 /* URL ของ Apps Script (/exec) — เปลี่ยนได้ที่ปุ่ม "ตั้งค่าที่เก็บคะแนน" ในแอป */
 const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzx7tZYRunES9Gfi0zOIb0Amz-kzp_LMdFhQzgJetRychRwso_vFuleXi0nbPdGjT5r/exec';
@@ -395,7 +396,7 @@ const CFG = {
   SLASH_SPEED: 700,   // px/วินาที — เร็วกว่านี้ = ฟันตัดผ่าน เลือกทันที
   SMOOTH: .9,         // ยิ่งใกล้ 1 ยิ่งตามมือไว (แต่สั่นขึ้น)
   BASE_PT: 10,
-  MULT: { easy:1, mid:2, hard:3 },
+  MULT: { '1':1, '2':2, '3':3, '4':4 },
 };
 
 const OPS = {
@@ -404,7 +405,7 @@ const OPS = {
   mul:{sym:'×', th:'คูณ', say:'คูณ'},
   div:{sym:'÷', th:'หาร', say:'หาร'},
 };
-const LV_TH = { easy:'ง่าย', mid:'กลาง', hard:'ยาก' };
+const LV_TH = { '1':'ระดับ 1', '2':'ระดับ 2', '3':'ระดับ 3', '4':'ระดับ 4' };
 
 const PALETTE = [['#FFB27A','#F4436C'],['#7FF3E4','#0E9F9E'],['#D6C7FF','#7C3AED'],
                  ['#FFE08A','#E09B00'],['#A5F3A0','#15803D'],['#9AD5FF','#1D6FD6']];
@@ -424,7 +425,7 @@ const LS = {
 const S = {
   name: LS.get('name','เจ้าคุณ'),
   modes: LS.get('modes',['add']),
-  level: LS.get('level','easy'),
+  level: String(LS.get('level','1')),
   count: LS.get('count',3),
   play: LS.get('play','hold'),          // hold = ลากมือค้าง · slash = หั่นมือ · tap = แตะจอ
   useVox: LS.get('useVox',true),
@@ -434,7 +435,7 @@ const S = {
   score:0, idx:0, ok:0, no:0, combo:0, maxCombo:0,
   q:null, bubbles:[], parts:[], trail:[],
   used:new Set(), round:new Set(),
-  startAt:0, qAt:0, pauseAt:0, times:[], running:false, locked:true,
+  startAt:0, qAt:0, pauseAt:0, grace:0, times:[], running:false, locked:true,
   ptr:null, pprev:null, pv:0, slash:null, praise:null, lastHand:0, handSeen:false,
   camOn:false, camFail:false,
 };
@@ -488,44 +489,75 @@ function pickVoice(){
   return voTH;
 }
 try{ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }catch{}
-function say(txt){
-  if(!S.useVox || !voTH || !txt) return;
+
+/* เครื่องไม่มีเสียงไทย -> ใช้เสียงอ่านออนไลน์แทน (ต้องต่อเน็ต)
+   ล้มเหลวติดกัน 3 ครั้ง (เน็ตหลุด/โดนบล็อก) = เงียบไปเลย ไม่ยิงซ้ำให้เปลือง */
+let audioEl = null, onlineFail = 0;
+function sayOnline(txt){
+  if(onlineFail >= 3) return;
   try{
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(txt);
-    u.voice = voTH; u.lang = voTH.lang || 'th-TH';
-    u.rate = .95; u.pitch = 1.1;
-    speechSynthesis.speak(u);
+    const u = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=th&q=' + encodeURIComponent(txt);
+    const a = new Audio(u);
+    a.onerror = () => { onlineFail++; };
+    a.onplaying = () => { onlineFail = 0; };
+    audioEl = a;
+    a.play().catch(() => { onlineFail++; });
   }catch{}
+}
+function stopSay(){
+  try{ speechSynthesis.cancel(); }catch{}
+  try{ if(audioEl){ audioEl.pause(); audioEl = null; } }catch{}
+}
+function say(txt){
+  if(!S.useVox || !txt) return;
+  stopSay();
+  if(voTH){
+    try{
+      const u = new SpeechSynthesisUtterance(txt);
+      u.voice = voTH; u.lang = voTH.lang || 'th-TH';
+      u.rate = .95; u.pitch = 1.1;
+      speechSynthesis.speak(u);
+      return;
+    }catch{}
+  }
+  sayOnline(txt);
 }
 const sayQ = () => { if(S.q) say(`${S.q.a} ${OPS[S.q.op].say} ${S.q.b} เท่ากับเท่าไร`); };
 
 /* ═══════════ สร้างโจทย์ ═══════════ */
+/* ระดับ 1-4:
+   1 = ง่ายสุด เลขไม่เกิน 10 คูณหารแม่ 1-5
+   2 = ง่ายไปกลาง — บวกลบผลไม่เกิน 30 · คูณหารไม่เกินแม่ 3 (ตามที่ Surat กำหนด)
+   3 = กลาง · 4 = ยาก */
 function genQ(mode, level){
   if(mode === 'add'){
     let a,b;
-    if(level==='easy'){ a=ri(1,10);  b=ri(1,10); }
-    else if(level==='mid'){ a=ri(10,50); b=ri(5,50); }
+    if(level==='1'){ a=ri(1,10);  b=ri(1,10); }
+    else if(level==='2'){ a=ri(1,29); b=ri(1,30-a); }
+    else if(level==='3'){ a=ri(10,50); b=ri(5,50); }
     else { a=ri(25,99); b=ri(25,99); }
     return {a,b,op:'add',ans:a+b};
   }
   if(mode === 'sub'){
     let a,b;
-    if(level==='easy'){ a=ri(2,10);  b=ri(1,a); }
-    else if(level==='mid'){ a=ri(15,50); b=ri(1,a); }
+    if(level==='1'){ a=ri(2,10);  b=ri(1,a); }
+    else if(level==='2'){ a=ri(5,30); b=ri(1,a); }
+    else if(level==='3'){ a=ri(15,50); b=ri(1,a); }
     else { a=ri(50,199); b=ri(10,a); }
     return {a,b,op:'sub',ans:a-b};
   }
   if(mode === 'mul'){
     let a,b;
-    if(level==='easy'){ a=ri(1,5);  b=ri(1,5); }
-    else if(level==='mid'){ a=ri(2,9); b=ri(2,9); }
+    if(level==='1'){ a=ri(1,5);  b=ri(1,5); }
+    else if(level==='2'){ a=ri(2,3); b=ri(1,12); if(Math.random()<.5){ const t=a; a=b; b=t; } }
+    else if(level==='3'){ a=ri(2,9); b=ri(2,9); }
     else { a=ri(11,25); b=ri(3,9); }
     return {a,b,op:'mul',ans:a*b};
   }
   let d,q;                                   // หารลงตัวเสมอ
-  if(level==='easy'){ d=ri(2,5);  q=ri(1,5); }
-  else if(level==='mid'){ d=ri(2,9); q=ri(2,9); }
+  if(level==='1'){ d=ri(2,5);  q=ri(1,5); }
+  else if(level==='2'){ d=ri(2,3); q=ri(1,12); }
+  else if(level==='3'){ d=ri(2,9); q=ri(2,9); }
   else { d=ri(3,12); q=ri(4,20); }
   return {a:d*q, b:d, op:'div', ans:q};
 }
@@ -647,7 +679,7 @@ function stopCam(){
 const MP_V     = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
 const MP_MODEL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
 const MP_OPT   = `{ runningMode:'VIDEO', numHands:1,
-  minHandDetectionConfidence:.4, minHandPresenceConfidence:.4, minTrackingConfidence:.3 }`;
+  minHandDetectionConfidence:.3, minHandPresenceConfidence:.3, minTrackingConfidence:.25 }`;
 
 /* ตัวจับมือรันใน Web Worker — เธรดหลักจะได้เอาไปวาดจออย่างเดียว ไม่ต้องแย่งกัน
    ผลคือ fps ไม่ตกตอนตรวจมือ และรอยมือลื่นขึ้นชัดเจน
@@ -737,7 +769,7 @@ async function loadHands(){
   const fs = await FilesetResolver.forVisionTasks(MP_V + '/wasm');
   const opt = Object.assign({ baseOptions:{ modelAssetPath:MP_MODEL, delegate:'GPU' } },
     { runningMode:'VIDEO', numHands:1,
-      minHandDetectionConfidence:.4, minHandPresenceConfidence:.4, minTrackingConfidence:.3 });
+      minHandDetectionConfidence:.3, minHandPresenceConfidence:.3, minTrackingConfidence:.25 });
   try{ landmarker = await HandLandmarker.createFromOptions(fs, opt); }
   catch{ opt.baseOptions.delegate = 'CPU'; landmarker = await HandLandmarker.createFromOptions(fs, opt); }
   try{                                          // อุ่นเครื่องเหมือนกัน กันเฟรมแรกค้าง
@@ -804,8 +836,14 @@ function detectHand(now){
        ไม่งั้น workerBusy ค้างเป็น true ตลอด = ไม่ส่งเฟรมอีกเลย = มือตายสนิท */
     if(workerBusy && now - workerSentAt < 2000) return;
     workerBusy = true; workerSentAt = now;
-    createImageBitmap(video)
-      .then(bm => { try{ worker.postMessage({ type:'frame', bitmap:bm, ts:now }, [bm]); }
+    /* ย่อเฟรมเหลือกว้าง 320 ก่อนส่ง — โมเดลย่อเองเหลือ ~192px อยู่แล้ว
+       ส่งเฟรมเต็มมีแต่เสียเวลาก๊อปข้ามเธรด (จุดหน่วงหลักของเครื่องช้า) */
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const mk = vw > 400
+      ? createImageBitmap(video, { resizeWidth:320, resizeHeight:Math.round(320*vh/vw) })
+          .catch(() => createImageBitmap(video))
+      : createImageBitmap(video);
+    mk.then(bm => { try{ worker.postMessage({ type:'frame', bitmap:bm, ts:now }, [bm]); }
                     catch{ workerBusy = false; try{ bm.close(); }catch{} } })
       .catch(() => { workerBusy = false; });
     return;
@@ -881,7 +919,7 @@ function layout(n){
       vx: (Math.random()<.5?-1:1) * ri(Math.round(sp*.6), sp),
       vy: (Math.random()<.5?-1:1) * ri(Math.round(sp*.5), Math.round(sp*.9)),
       r, val:0, grad:PALETTE[i%PALETTE.length],
-      dwell:0, state:null, stateAt:0, born:performance.now(),
+      dwell:0, state:null, stateAt:0, armed:false, born:performance.now(),
     };
   });
 }
@@ -1104,6 +1142,21 @@ function pathHit(pts, b, pad){
 function checkHit(dtms){
   if(S.locked || !S.ptr || S.play === 'tap') return;
   const now = performance.now();
+
+  /* ช่วงพักสั้นๆ หลังเปลี่ยนข้อ — มือที่ยังค้างจากข้อก่อนต้องไม่กลายเป็นคำตอบข้อใหม่ */
+  if(now < S.grace){
+    S.trail.length = 0;
+    for(const b of S.bubbles) b.dwell = 0;
+    return;
+  }
+  /* ลูกที่มือทับอยู่ตั้งแต่ข้อเริ่ม "ยังไม่ปลดล็อก" — ต้องเอามือออกก่อนหนึ่งครั้งถึงเลือกได้ */
+  let armedNow = false;
+  for(const b of S.bubbles){
+    if(b.state || b.armed) continue;
+    if(Math.hypot(S.ptr.x-b.x, S.ptr.y-b.y) > b.r + 26){ b.armed = true; armedNow = true; }
+  }
+  if(armedNow) S.trail.length = 0;   // ตัดรอยตอนถอนมือทิ้ง ไม่ให้นับเป็นการฟันลูกที่เพิ่งปลดล็อก
+
   const a = S.pprev || S.ptr;
   const canSlash = S.play === 'slash';
   const canHold  = S.play === 'hold';
@@ -1111,7 +1164,7 @@ function checkHit(dtms){
   const sw = canSlash ? swipe(now) : null;
 
   for(const b of S.bubbles){
-    if(b.state){ b.dwell = 0; continue; }
+    if(b.state || !b.armed){ b.dwell = 0; continue; }
 
     /* หั่นผ่าน = ติดทันที ไม่ต้องค้าง */
     if(canSlash){
@@ -1200,6 +1253,8 @@ function advance(){
   paintHud(); paintQ();
   S.locked = false;
   S.qAt = Date.now();
+  S.grace = performance.now() + 700;
+  S.trail.length = 0; S.pv = 0;
   sayQ();
 }
 
@@ -1329,7 +1384,8 @@ async function start(){
   S.q = nextQ(); seedBubbles(); paintQ(); paintHud();
   S.startAt = Date.now(); S.qAt = Date.now();
   S.running = true; S.locked = false;
-  $('#btnSpk').style.display = voTH ? '' : 'none';
+  S.grace = performance.now() + 700;
+  S.trail.length = 0; S.pv = 0;
   hint(HINT_BY_MODE(), 3600);
   sayQ();
 }
@@ -1351,7 +1407,7 @@ function finish(){
   const secs = Math.max(1, Math.round((Date.now()-S.startAt)/1000));
   stopCam(); wakeOff();
   cancelAnimationFrame(raf); raf = 0;
-  try{ speechSynthesis.cancel(); }catch{}
+  stopSay();
   sndEnd();
 
   const acc = S.ok / CFG.ROUND;
@@ -1398,7 +1454,7 @@ function quit(){
   stopCam(); wakeOff(); cancelAnimationFrame(raf); raf = 0;
   $('#loadBox').classList.add('off');
   $('#countBox').classList.remove('on');
-  try{ speechSynthesis.cancel(); }catch{}
+  stopSay();
   show('home');
 }
 
@@ -1504,15 +1560,10 @@ function paintChips(){
   });
 
   const vc = $('#voxChip');
-  if(!voTH){                                   // ไม่มีเสียงไทย = ปิดตาย ไม่ปล่อยให้ฝรั่งอ่านไทย
-    vc.setAttribute('aria-pressed','false');
-    vc.textContent = 'ไม่มีเสียงไทย';
-    vc.title = 'เครื่องนี้ยังไม่มีเสียงพูดภาษาไทย — กดเพื่อดูวิธีติดตั้ง';
-  }else{
-    vc.setAttribute('aria-pressed', S.useVox);
-    vc.textContent = S.useVox ? 'มีเสียงอ่าน' : 'ปิดเสียง';
-    vc.title = `เสียงที่ใช้: ${voTH.name}`;
-  }
+  vc.setAttribute('aria-pressed', S.useVox);
+  vc.textContent = S.useVox ? (voTH ? 'มีเสียงอ่าน' : 'เสียงอ่าน (ออนไลน์)') : 'ปิดเสียง';
+  vc.title = voTH ? `เสียงที่ใช้: ${voTH.name}`
+                  : 'เครื่องนี้ไม่มีเสียงไทย ใช้เสียงอ่านออนไลน์แทน (ต้องต่อเน็ต)';
 }
 
 $('#modeChips').addEventListener('click', e => {
@@ -1538,23 +1589,9 @@ $('#playChips').addEventListener('click', e => {
   S.play = c.dataset.p; LS.set('play', S.play); paintChips(); tone(820,0,.06,'square',.06);
 });
 $('#voxChip').addEventListener('click', () => {
-  if(!pickVoice()){                            // ลองหาใหม่อีกที เผื่อเพิ่งติดตั้ง
-    paintChips();
-    modal(`
-      <h3>ยังไม่มีเสียงภาษาไทยในเครื่องนี้</h3>
-      <p>เกมจะไม่พูดเลย ดีกว่าปล่อยให้เสียงภาษาอังกฤษอ่านไทยแล้วฟังไม่ออก · เอฟเฟกต์เสียงอื่นยังทำงานปกติ</p>
-      <p><b>ติดตั้งเสียงไทยบน Windows</b></p>
-      <ol class="ol">
-        <li>Settings → Time &amp; language → Speech</li>
-        <li>Manage voices → Add voices → เลือก <b>ไทย (Thai)</b></li>
-        <li>ติดตั้งเสร็จ ปิดเปิดเบราว์เซอร์ แล้วกดปุ่มนี้อีกที</li>
-      </ol>
-      <p>บนมือถือ Android / iPhone ส่วนใหญ่มีเสียงไทยมาให้อยู่แล้ว</p>
-      <button class="btn ghost mini" id="mClose">เข้าใจแล้ว</button>`);
-    return;
-  }
+  pickVoice();                                 // เผื่อเพิ่งลงเสียงไทยเพิ่ม
   S.useVox = !S.useVox; LS.set('useVox', S.useVox); paintChips();
-  if(S.useVox) say('อ่านโจทย์ให้ฟังแล้วนะ'); else { try{ speechSynthesis.cancel(); }catch{} }
+  if(S.useVox) say('อ่านโจทย์ให้ฟังแล้วนะ'); else stopSay();
 });
 
 $('#btnStart').addEventListener('click', start);
@@ -1630,7 +1667,7 @@ document.addEventListener('visibilitychange', () => {
   if(document.hidden){
     if(S.screen === 'play' && S.running){
       S.pauseAt = Date.now();
-      try{ speechSynthesis.cancel(); }catch{}
+      stopSay();
     }
   }else{
     if(S.pauseAt){
@@ -1642,6 +1679,12 @@ document.addEventListener('visibilitychange', () => {
 });
 
 /* ---------- boot ---------- */
+/* คนที่เคยเล่นก่อน v1.6 เก็บระดับเป็น easy/mid/hard — แปลงเป็น 1-4 */
+const LV_OLD = { easy:'1', mid:'3', hard:'4' };
+if(LV_OLD[S.level]) S.level = LV_OLD[S.level];
+if(!['1','2','3','4'].includes(S.level)) S.level = '1';
+LS.set('level', S.level);
+
 $('#pname').value = S.name;
 paintChips();
 /* เปิดไฟล์ตรงๆ (file://) เบราว์เซอร์จะไม่ให้แตะกล้องเลย — ต้องบอกให้ชัดว่าทำไม
