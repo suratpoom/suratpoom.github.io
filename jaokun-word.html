@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="ซาฟารีคำศัพท์">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="jaokun-icon-180.png">
-<title>ซาฟารีคำศัพท์ v1.0 — เกมจับศัพท์อังกฤษ</title>
+<title>ซาฟารีคำศัพท์ v1.1 — เกมจับศัพท์อังกฤษ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Thai+2:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -295,8 +295,8 @@ a{color:inherit;text-decoration:none}
     </div>
   </div>
 
-  <p class="note">ตอบถูกมีเสียงอ่านคำศัพท์ให้ฟังทุกครั้ง จำเสียงไปพร้อมกับจำคำ</p>
-  <p class="ver">ซาฟารีคำศัพท์ v1.0 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
+  <p class="note">ขึ้นข้อใหม่จะอ่านคำศัพท์ให้ฟังทันที ช้าๆ ชัดๆ 2 รอบ<br>แตะรูปลำโพงเพื่อฟังซ้ำได้ตลอด</p>
+  <p class="ver">ซาฟารีคำศัพท์ v1.1 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
 
  </div></div>
 </section>
@@ -377,7 +377,7 @@ a{color:inherit;text-decoration:none}
    engine กล้อง+จับมือชุดเดียวกับเกมคิดเลข v1.7
    ═══════════════════════════════════════════════ */
 
-const VERSION = 'v1.0';
+const VERSION = 'v1.1';
 const GAME    = 'word';
 const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzx7tZYRunES9Gfi0zOIb0Amz-kzp_LMdFhQzgJetRychRwso_vFuleXi0nbPdGjT5r/exec';
 
@@ -499,19 +499,30 @@ function pickVoice(){
 }
 try{ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }catch{}
 
-let audioEl = null, onlineFail = 0;
-function sayOnline(txt, lang){
+let audioEl = null, onlineFail = 0, sayToken = 0;
+/* times > 1 = ทวนซ้ำ ต้องรอไฟล์เสียงจบก่อนค่อยเล่นรอบใหม่ ไม่งั้นเสียงทับกันจนฟังไม่ออก
+   slow = ttsspeed ของ Google — ใช้กับคำศัพท์เดี่ยวๆ ให้เด็กจับเสียงทัน */
+function sayOnline(txt, lang, times = 1, slow = false){
   if(onlineFail >= 3) return;
+  const tk = sayToken;
   try{
-    const u = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=' + lang + '&q=' + encodeURIComponent(txt);
-    const a = new Audio(u);
-    a.onerror = () => { onlineFail++; };
-    a.onplaying = () => { onlineFail = 0; };
-    audioEl = a;
-    a.play().catch(() => { onlineFail++; });
+    const url = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob'
+      + (slow ? '&ttsspeed=0.3' : '') + '&tl=' + lang + '&q=' + encodeURIComponent(txt);
+    let left = times;
+    const play = () => {
+      if(tk !== sayToken) return;               // เปลี่ยนข้อ/กดออกไปแล้ว อย่าเล่นต่อ
+      const a = new Audio(url);
+      a.onerror = () => { onlineFail++; };
+      a.onplaying = () => { onlineFail = 0; };
+      a.onended = () => { if(--left > 0) setTimeout(play, 420); };
+      audioEl = a;
+      a.play().catch(() => { onlineFail++; });
+    };
+    play();
   }catch{}
 }
 function stopSay(){
+  sayToken++;                                   // ทิ้งคิวทวนซ้ำที่ค้างอยู่
   try{ speechSynthesis.cancel(); }catch{}
   try{ if(audioEl){ audioEl.pause(); audioEl = null; } }catch{}
 }
@@ -528,24 +539,29 @@ function say(txt){                              // ไทย
   }
   sayOnline(txt, 'th');
 }
-function sayEN(txt){                            // อังกฤษ อ่านช้าชัดๆ
+/* อังกฤษ — อ่านช้า ชัด และทวนได้หลายรอบ
+   ⚠️ เด็กต้องได้ยินคำ "ก่อน" เลือก ไม่ใช่ได้ยินหลังตอบ (Surat สั่ง 2026-08-13) */
+function sayEN(txt, times = 1){
   if(!S.useVox || !txt) return;
   stopSay();
+  const tk = sayToken;
   if(voEN){
     try{
-      const u = new SpeechSynthesisUtterance(txt);
-      u.voice = voEN; u.lang = voEN.lang || 'en-US'; u.rate = .8; u.pitch = 1.05;
-      speechSynthesis.speak(u);
+      const once = i => {
+        if(tk !== sayToken) return;             // โดนยกเลิกไปแล้ว
+        const u = new SpeechSynthesisUtterance(txt);
+        u.voice = voEN; u.lang = voEN.lang || 'en-US'; u.rate = .6; u.pitch = 1.05;
+        u.onend = () => { if(i+1 < times) setTimeout(() => once(i+1), 420); };
+        speechSynthesis.speak(u);
+      };
+      once(0);
       return;
     }catch{}
   }
-  sayOnline(txt, 'en');
+  sayOnline(txt, 'en', times, true);
 }
-const sayQ = () => {
-  if(!S.q) return;
-  if(S.wmode === 'listen') sayEN(S.q.en.toLowerCase());
-  else say(`${S.q.th} ภาษาอังกฤษคือคำไหน`);
-};
+/* ขึ้นข้อใหม่ = อ่านคำศัพท์ให้ฟังทันที 2 รอบ ทั้งสองโหมด */
+const sayQ = () => { if(S.q) sayEN(S.q.en.toLowerCase(), 2); };
 
 /* ═══════════ สร้างชุดโจทย์ 10 ข้อ — ไม่ซ้ำในรอบ ตัวลวงหมวดเดียวกันก่อน
    กันคำซ้ำกันเองในตัวเลือก (ORANGE มีทั้งหมวดผลไม้และหมวดสี) */
@@ -1139,15 +1155,15 @@ function pick(b){
     cheer(pickPraise());
     if(S.combo >= 3) showCombo(`ต่อเนื่อง ${S.combo} ข้อ`);
     sayEN(S.q.en.toLowerCase());               // ตอบถูก = ได้ยินคำนั้นซ้ำ จำแม่นขึ้น
-    setTimeout(() => advance(), 950);
+    setTimeout(() => advance(), 1250);         // เผื่อให้อ่านจบก่อนเปลี่ยนข้อ (อ่านช้าลงแล้ว)
   }else{
     S.no++; S.combo = 0; hideCombo();
     S.wrongs.push({ p:S.q.p, en:S.q.en, th:S.q.th });
     const good = S.bubbles.find(x => x.val.en === S.q.en && x.val.p === S.q.p);
     if(good){ good.state = 'reveal'; good.stateAt = now; burst(good.x, good.y, ['#86EFAC','#fff'], 16); }
     sndNo(); buzz();
-    sayEN(S.q.en.toLowerCase());               // เฉลยด้วยเสียงคำที่ถูก
-    setTimeout(() => advance(), 1500);
+    sayEN(S.q.en.toLowerCase(), 2);            // เฉลยด้วยเสียงคำที่ถูก ทวน 2 รอบ
+    setTimeout(() => advance(), 2600);
   }
   paintHud();
 }
@@ -1353,7 +1369,7 @@ function finish(){
         <span class="t">${esc(w.en)}<small>${esc(w.th)}</small></span>
         <button class="sp wlSpk" data-i="${i}" aria-label="ฟัง">${SPK_SVG}</button>
       </div>`).join('');
-  $$('.wlSpk').forEach(b => b.addEventListener('click', () => sayEN(uniq[+b.dataset.i].en.toLowerCase())));
+  $$('.wlSpk').forEach(b => b.addEventListener('click', () => sayEN(uniq[+b.dataset.i].en.toLowerCase(), 2)));
 
   show('result');
   const tk = runToken;
@@ -1539,7 +1555,7 @@ $('#btnHow').addEventListener('click', () => modal(`
     <li>เอามือวางทับคำตอบค้างไว้จนวงแหวนทองเต็ม หรือฟันผ่านเร็วๆ</li>
     <li>ถ้ากล้องไม่ทำงาน แตะบนจอได้เลย</li>
   </ol>
-  <p>ตอบถูกมีเสียงอ่านคำให้ฟังซ้ำทุกครั้ง เล่นรอบละ ${CFG.ROUND} ข้อ</p>
+  <p>ทุกข้อจะอ่านคำศัพท์ให้ฟังทันที ช้าๆ 2 รอบ · ตอบผิดอ่านคำที่ถูกซ้ำอีก 2 รอบ · เล่นรอบละ ${CFG.ROUND} ข้อ</p>
   <button class="btn ghost mini" id="mClose">เข้าใจแล้ว</button>
 `));
 

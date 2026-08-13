@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="นักเขียนตัวน้อย">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="jaokun-icon-180.png">
-<title>นักเขียนตัวน้อย v1.0 — เกมลากเส้นเขียนตัวอักษร</title>
+<title>นักเขียนตัวน้อย v1.1 — เกมลากเส้นเขียนตัวอักษร</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Thai+2:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -195,7 +195,7 @@ a{color:inherit;text-decoration:none}
   </div>
 
   <p class="note">เขียนครบตัว ตัวอักษรจะกลายเป็นรูปพร้อมเสียงอ่าน<br>A = Apple 🍎 · เลข 3 = ลูกเจี๊ยบ 3 ตัว</p>
-  <p class="ver">นักเขียนตัวน้อย v1.0</p>
+  <p class="ver">นักเขียนตัวน้อย v1.1</p>
 
  </div></div>
 </section>
@@ -250,9 +250,11 @@ a{color:inherit;text-decoration:none}
 const VERSION = 'v1.0';
 
 const CFG = {
-  SMOOTH: .62,          /* ปากกาต้องนิ่งกว่าเกมจับบอล — ลด smooth ลงให้หายสั่น */
-  DOT_GAP: 23,          /* ระยะจุดในกรอบ 100×140 */
+  SMOOTH: .55,          /* ปากกาต้องนิ่งกว่าเกมจับบอล — ลด smooth ลงให้หายสั่น */
+  DOT_GAP: 26,          /* ระยะจุดในกรอบ 100×140 — จุดห่างขึ้น = จุดใหญ่ขึ้น ลากง่ายขึ้น */
   FINE: 3,
+  LOOK_AIR: 6,          /* ชูนิ้วลากไว มองข้ามไปได้ไกลกว่า ไม่งั้นข้ามจุดแล้วตัน */
+  LOOK_TOUCH: 3,
 };
 
 /* ---------- helpers ---------- */
@@ -328,7 +330,7 @@ const S = {
 
   screen:'home', gi:0,
   si:0, di:0, strokes:[], finished:false, drawing:false,
-  trail:[], lastHitAt:0, hinted:false, running:false,
+  trail:[], penPrev:null, lastHitAt:0, hinted:false, running:false,
   ptr:null, pprev:null, pv:0, ptrAt:0, lastHand:0, handSeen:false,
   camOn:false, camFail:false, pauseAt:0,
 };
@@ -640,7 +642,9 @@ function applyLandmarks(lm, now){
   const reacquired = !prev || gap > gapLimit || jump > Math.min(CW,CH)*0.55;
 
   if(reacquired){
-    S.ptr = { x:nx, y:ny }; S.pprev = { x:nx, y:ny }; S.pv = 0;
+    /* มือหลุดแล้วโผล่ใหม่คนละที่ = ห้ามลากเส้นเชื่อมจากตำแหน่งเก่า
+       ไม่งั้นจะกวาดติดจุดรวดเดียวทั้งตัวอักษรโดยที่เด็กไม่ได้เขียน */
+    S.ptr = { x:nx, y:ny }; S.pprev = { x:nx, y:ny }; S.pv = 0; S.penPrev = null;
   }else{
     const sx = prev.x + (nx-prev.x)*CFG.SMOOTH, sy = prev.y + (ny-prev.y)*CFG.SMOOTH;
     S.pprev = prev;
@@ -677,7 +681,7 @@ function resample(pts, gap){
 function loadGlyph(){
   const g = glyph();
   S.si = 0; S.di = 0; S.finished = false;
-  S.trail = []; S.lastHitAt = performance.now(); S.hinted = false;
+  S.trail = []; S.penPrev = null; S.lastHitAt = performance.now(); S.hinted = false;
   S.strokes = g.strokes.map(pts => {
     const fine = resample(pts, CFG.FINE);
     const dots = resample(pts, CFG.DOT_GAP).map(d => {
@@ -710,7 +714,8 @@ function paintGRow(){
 }
 
 /* ═══════════ วาด ═══════════ */
-function hitR(){ return Math.max(useCam() ? 38 : 28, K*(useCam() ? 13 : 10)); }
+/* โหมดชูนิ้วต้องใจกว้างกว่าลากบนจอมาก — มือลอยกลางอากาศเล็งไม่นิ่งเท่านิ้วแตะจอ */
+function hitR(){ return Math.max(useCam() ? 48 : 28, K*(useCam() ? 17 : 10)); }
 
 function drawBoard(now){
   if(!S.strokes.length) return;
@@ -809,19 +814,32 @@ function drawBoard(now){
 }
 
 /* ═══════════ ลากผ่านจุด ═══════════ */
+/* ปลายนิ้วขยับเร็วกว่าเฟรม — ต้องเช็ค "เส้นทางที่ลากผ่าน" ไม่ใช่แค่จุดที่นิ้วอยู่ตอนนี้
+   ไม่งั้นลากไวหน่อยก็ข้ามจุดไปเลย แล้วจุดถัดไปไม่ยอมติด = รู้สึกว่าลากยาก (Surat แจ้ง 2026-08-13) */
+function segNear(a, b, c, r){
+  const dx = b.x-a.x, dy = b.y-a.y;
+  const L = dx*dx + dy*dy;
+  let t = L < 1e-6 ? 0 : ((c.x-a.x)*dx + (c.y-a.y)*dy) / L;
+  t = clamp(t, 0, 1);
+  return Math.hypot(a.x + dx*t - c.x, a.y + dy*t - c.y) < r;
+}
 function handlePen(p, now){
   if(S.finished || !S.strokes.length) return;
   S.trail.push({ ...p, t: now });
   const st = S.strokes[S.si];
   const R = hitR();
-  for(let j = S.di; j < Math.min(S.di+3, st.dots.length); j++){
-    if(dist(p, gpx(st.dots[j])) < R){
+  const from = S.penPrev || p;
+  const look = Math.min(S.di + (useCam() ? CFG.LOOK_AIR : CFG.LOOK_TOUCH), st.dots.length);
+  for(let j = S.di; j < look; j++){
+    const q = gpx(st.dots[j]);
+    if(dist(p, q) < R || segNear(from, p, q, R)){
       for(let k = S.di; k <= j; k++) tone(560 + (S.di+k)*22, 0, .08, 'square', .06);
       S.di = j + 1;
       S.lastHitAt = now; S.hinted = false;
       break;
     }
   }
+  S.penPrev = { x:p.x, y:p.y };
   if(S.di >= st.dots.length){
     S.si++; S.di = 0;
     S.lastHitAt = now;
@@ -840,6 +858,7 @@ cv.addEventListener('pointerdown', e => {
   if(S.screen !== 'play') return;
   ac();
   S.drawing = true;
+  S.penPrev = null;                     // เริ่มแตะใหม่ = ไม่ลากเส้นต่อจากจุดที่ยกนิ้วไป
   try{ cv.setPointerCapture(e.pointerId); }catch{}
   handlePen(toXY(e), performance.now());
 });

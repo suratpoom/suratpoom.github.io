@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="สวนสัตว์ความจำ">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="jaokun-icon-180.png">
-<title>สวนสัตว์ความจำ v1.0 — เกมฝึกความจำ</title>
+<title>สวนสัตว์ความจำ v1.1 — เกมฝึกความจำ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Thai+2:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -222,10 +222,10 @@ a{color:inherit;text-decoration:none}
   </div>
 
   <div class="card">
-    <p class="lbl">มีสัตว์กี่ตัวบนจอ</p>
+    <p class="lbl">สุดท้ายมีสัตว์สูงสุดกี่ตัว</p>
     <div class="chips" id="nChips">
-      <button class="chip nn" data-n="4" aria-pressed="true">4 ตัว</button>
-      <button class="chip nn" data-n="6" aria-pressed="false">6 ตัว</button>
+      <button class="chip nn" data-n="4" aria-pressed="true" title="เริ่ม 2 ตัว เพิ่มทีละตัวจนถึง 4">ถึง 4 ตัว</button>
+      <button class="chip nn" data-n="6" aria-pressed="false" title="เริ่ม 2 ตัว เพิ่มทีละตัวจนถึง 6">ถึง 6 ตัว</button>
     </div>
   </div>
 
@@ -259,8 +259,8 @@ a{color:inherit;text-decoration:none}
     </div>
   </div>
 
-  <p class="note">เริ่มจำ 2 ตัว แล้วเพิ่มทีละตัว พลาดได้ 3 ครั้ง</p>
-  <p class="ver">สวนสัตว์ความจำ v1.0 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
+  <p class="note">เริ่มจากสัตว์ 2 ตัว จำ 2 ตัว<br>ผ่านรอบนึงได้เพื่อนใหม่ 1 ตัว และลำดับยาวขึ้น 1 · พลาดได้ 3 ครั้ง</p>
+  <p class="ver">สวนสัตว์ความจำ v1.1 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
 
  </div></div>
 </section>
@@ -339,15 +339,17 @@ a{color:inherit;text-decoration:none}
    engine กล้อง+จับมือชุดเดียวกับเกมคิดเลข v1.7
    ═══════════════════════════════════════════════ */
 
-const VERSION = 'v1.0';
+const VERSION = 'v1.1';
 const GAME    = 'memory';
 const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzx7tZYRunES9Gfi0zOIb0Amz-kzp_LMdFhQzgJetRychRwso_vFuleXi0nbPdGjT5r/exec';
 
 const CFG = {
-  DWELL_MS: 520,
+  DWELL_MS: 600,      // ค้างมือนานกว่าเกมบอลนิดนึง — กันมือ "เดินผ่าน" การ์ดแล้วติดเอง
   SMOOTH: .9,
   LIVES: 3,
   START_LEN: 2,
+  START_PADS: 2,      // รอบแรกโชว์ 2 ตัว แล้วเพิ่มทีละตัวทุกรอบจนครบที่ตั้งไว้
+  ARM_MOVE: 55,       // ขยับมือเกินนี้ = ตั้งใจเลือกแล้ว ปลดล็อกการ์ดทุกใบ
 };
 
 /* สัตว์ + โน้ตเพนทาโทนิก ฟังแล้วเป็นเพลง · สีขอบ pad คนละสี */
@@ -382,9 +384,9 @@ const S = {
   best: LS.get('mem.best',0),
 
   screen:'home',
-  animals:[], cells:[], seq:[], step:0, lives:CFG.LIVES, rounds:0, maxDone:0,
+  pool:[], animals:[], cells:[], seq:[], step:0, lives:CFG.LIVES, rounds:0, maxDone:0,
   phase:'idle',                            // idle | show | input | wait | over
-  startAt:0, pauseAt:0, grace:0, running:false,
+  startAt:0, pauseAt:0, grace:0, running:false, armFrom:null,
   ptr:null, pprev:null, pv:0, ptrAt:0, trail:[], praise:null, lastHand:0, handSeen:false,
   camOn:false, camFail:false,
 };
@@ -726,21 +728,27 @@ function applyLandmarks(lm, now){
 }
 
 /* ═══════════ pad สัตว์บน canvas ═══════════ */
+/* การ์ดต้อง "เล็กกว่าช่องที่จอง" — เว้นทางเดินให้มือขยับโดยไม่ทับการ์ดใบไหนเลย
+   ❌ ห้ามให้การ์ดเรียงชนกันเต็มจอ มือจะไม่มีที่ว่างให้ผ่าน แล้วโดนการ์ดผิดตัวติดเอง */
 function layoutCells(){
   const n = S.animals.length;
   if(!n){ S.cells = []; return; }
-  const cols = 2, rows = Math.ceil(n/cols);
-  const gap = 12, mx = 14;
-  const top = TOPPAD, bot = CH - 16;
-  const w = (CW - mx*2 - gap*(cols-1)) / cols;
-  const h = Math.min(w, (bot - top - gap*(rows-1)) / rows);
-  const totalH = h*rows + gap*(rows-1);
-  const oy = top + Math.max(0, (bot - top - totalH)/2);
+  const cols = n <= 4 ? 2 : 3;
+  const rows = Math.ceil(n / cols);
+  const top = TOPPAD, bot = CH - 16, mx = 16;
+  const gw = (CW - mx*2) / cols;
+  const gh = (bot - top) / rows;
+  const w = Math.min(gw * .72, 200);
+  const h = Math.min(gh * .76, w * 1.18, 225);
   S.cells = S.animals.map((a,i) => {
-    const c = i % cols, r = Math.floor(i/cols);
+    const r = Math.floor(i / cols);
+    const inRow = Math.min(cols, n - r*cols);       // แถวสุดท้ายอาจไม่เต็ม -> จัดกลาง
+    const c = i - r*cols;
+    const ox = mx + ((CW - mx*2) - inRow*gw)/2;
+    const cx = ox + c*gw + gw/2;
+    const cy = top + r*gh + gh/2;
     return {
-      i, x: mx + c*(w+gap), y: oy + r*(h+gap), w, h,
-      cx: mx + c*(w+gap) + w/2, cy: oy + r*(h+gap) + h/2,
+      i, x: cx - w/2, y: cy - h/2, w, h, cx, cy,
       lit:0, state:null, stateAt:0, dwell:0, armed:false,
     };
   });
@@ -802,8 +810,10 @@ function drawCell(c, now){
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(a.em, c.cx + shake, c.cy - h*.075);
 
-  const fs = clamp(Math.min(w,h)*.13, 13, 20);
-  ctx.font = `700 ${fs}px "Baloo Thai 2", system-ui, sans-serif`;
+  let fs = clamp(Math.min(w,h)*.15, 12, 21);      // ชื่อสัตว์ต้องอยู่ในการ์ด 1 บรรทัดเสมอ
+  const setF = () => ctx.font = `700 ${fs}px "Baloo Thai 2", system-ui, sans-serif`;
+  setF();
+  while(ctx.measureText(a.th).width > w - 12 && fs > 9){ fs -= 1; setF(); }
   ctx.lineJoin = 'round';
   ctx.lineWidth = fs*.28; ctx.strokeStyle = 'rgba(6,3,20,.7)';
   ctx.strokeText(a.th, c.cx + shake, y + h - fs*1.05);
@@ -855,13 +865,18 @@ function checkHit(dtms){
   const now = performance.now();
   if(now < S.grace){
     S.trail.length = 0;
+    S.armFrom = null;
     for(const c of S.cells) c.dwell = 0;
     return;
   }
-  /* pad ที่มือทับอยู่ตั้งแต่เริ่มตาต้องถอนมือออกก่อน — กันมือค้างกดเอง */
+  /* ปลดล็อกการ์ด = มือออกจากการ์ดนั้น "หรือ" ขยับมืออย่างตั้งใจหลังถึงตาเลือก
+     ❌ ห้ามใช้แค่ "ต้องถอนมือออกจากการ์ด" อย่างเดียว — ถ้าการ์ดเรียงเต็มจอ มือไม่มีที่ให้ออก
+        ผลคือกดการ์ดที่มือทับอยู่ไม่ได้เลย พอเลื่อนไปใบข้างๆ กลายเป็นตอบผิด (บั๊คจริง 2026-08-13) */
+  if(!S.armFrom) S.armFrom = { x:S.ptr.x, y:S.ptr.y };
+  const moved = Math.hypot(S.ptr.x - S.armFrom.x, S.ptr.y - S.armFrom.y) > CFG.ARM_MOVE;
   for(const c of S.cells){
     if(c.armed) continue;
-    if(!inCell(c, S.ptr.x, S.ptr.y)) c.armed = true;
+    if(moved || !inCell(c, S.ptr.x, S.ptr.y)) c.armed = true;
   }
   for(const c of S.cells){
     if(!c.armed){ c.dwell = 0; continue; }
@@ -904,7 +919,7 @@ async function playSeq(tk){
   S.phase = 'input'; S.step = 0;
   S.grace = performance.now() + 500;
   S.cells.forEach(c => { c.dwell = 0; c.armed = false; });
-  S.trail.length = 0;
+  S.trail.length = 0; S.armFrom = null;
   setState('yours', 'ตาหนูแล้ว เลือกตามเลย');
 }
 
@@ -927,13 +942,20 @@ function choose(i){
       S.maxDone = S.seq.length; S.rounds++;
       $('#spanTxt').textContent = S.maxDone;
       sndOk(); buzz();
-      setState('watch', 'เก่งมาก เพิ่มอีกตัวนะ');
+      /* ผ่านรอบ = เพิ่มเพื่อนใหม่บนจอ 1 ตัว จนครบที่ตั้งไว้ แล้วค่อยยาวขึ้นอย่างเดียว */
+      const grew = S.animals.length < S.pool.length;
+      if(grew){
+        S.animals.push(S.pool[S.animals.length]);
+        layoutCells();
+        tone(880, 0, .18, 'triangle', .16);
+      }
+      setState('watch', grew ? 'มีเพื่อนใหม่มาเพิ่ม ดูดีๆ นะ' : 'เก่งมาก เพิ่มอีกตัวนะ');
       if(S.maxDone === 5 || S.maxDone === 8 || S.maxDone === 11) say('สุดยอดเลย');
       setTimeout(() => {
         if(tk !== runToken) return;
         S.seq.push(ri(0, S.animals.length-1));
         playSeq(tk);
-      }, 1100);
+      }, grew ? 1500 : 1100);
     }
   }else{
     sndNo(); buzz();
@@ -1016,12 +1038,13 @@ async function start(){
   LS.set('name', S.name);
 
   show('play');
-  S.animals = shuffle([...ZOO]).slice(0, S.pads);
-  S.seq = [ri(0,S.pads-1), ri(0,S.pads-1)];
-  while(S.seq.length < CFG.START_LEN) S.seq.push(ri(0,S.pads-1));
+  /* รอบแรกโชว์แค่ 2 ตัว แล้วเพิ่มทีละตัวทุกรอบจนครบที่ตั้งไว้ — ค่อยๆ ยาก ไม่ท่วมตั้งแต่รอบแรก */
+  S.pool = shuffle([...ZOO]).slice(0, S.pads);
+  S.animals = S.pool.slice(0, Math.min(CFG.START_PADS, S.pool.length));
+  S.seq = Array.from({ length: CFG.START_LEN }, () => ri(0, S.animals.length-1));
   S.step = 0; S.lives = CFG.LIVES; S.rounds = 0; S.maxDone = 0;
   S.phase = 'idle'; S.running = false;
-  S.ptr = null; S.pprev = null; S.pv = 0; S.trail = []; S.pauseAt = 0;
+  S.ptr = null; S.pprev = null; S.pv = 0; S.trail = []; S.pauseAt = 0; S.armFrom = null;
   S.handSeen = false; S.camFail = false;
   fpsN = 0; fpsAt = 0; fpsVal = 0; detMs = 0;
   $('#diagTag').classList.remove('on');
@@ -1350,7 +1373,7 @@ if(!window.isSecureContext || !(navigator.mediaDevices && navigator.mediaDevices
 }
 
 /* debug handle — ไว้ทดสอบอัตโนมัติ ไม่กระทบเกม */
-window.JK = { S, start, quit, choose, show };
+window.JK = { S, start, quit, choose, show, checkHit, layoutCells };
 </script>
 </body>
 </html>
