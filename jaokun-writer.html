@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="นักเขียนตัวน้อย">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="jaokun-icon-180.png">
-<title>นักเขียนตัวน้อย v1.2 — เกมลากเส้นเขียนตัวอักษร</title>
+<title>นักเขียนตัวน้อย v1.3 — เกมลากเส้นเขียนตัวอักษร</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Thai+2:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -195,7 +195,7 @@ a{color:inherit;text-decoration:none}
   </div>
 
   <p class="note">เขียนครบตัว ตัวอักษรจะกลายเป็นรูปพร้อมเสียงอ่าน<br>A = Apple 🍎 · เลข 3 = ลูกเจี๊ยบ 3 ตัว · ก = ไก่ 🐔<br>ก-ฮ ครบ 44 ตัว เขียนบนจอได้เลย</p>
-  <p class="ver">นักเขียนตัวน้อย v1.2</p>
+  <p class="ver">นักเขียนตัวน้อย v1.3</p>
 
  </div></div>
 </section>
@@ -243,11 +243,11 @@ a{color:inherit;text-decoration:none}
 
 <script type="module">
 /* ═══════════════════════════════════════════════
-   นักเขียนตัวน้อย v1.2 — ลากเส้นเขียน A-Z, 0-9 และ ก-ฮ ครบ 44 ตัว
+   นักเขียนตัวน้อย v1.3 — ลากเส้นเขียน A-Z, 0-9 และ ก-ฮ ครบ 44 ตัว
    โหมดชูนิ้วเขียนกลางอากาศ ใช้ engine กล้องชุดเดียวกับเกมคิดเลข v1.7
    ═══════════════════════════════════════════════ */
 
-const VERSION = 'v1.2';
+const VERSION = 'v1.3';
 
 const CFG = {
   SMOOTH: .55,          /* ปากกาต้องนิ่งกว่าเกมจับบอล — ลด smooth ลงให้หายสั่น */
@@ -340,136 +340,145 @@ const THAI = [
 ];
 GLYPHS.thai = THAI.map(([ch,p,th]) => ({ ch, p, th, en:th, strokes:null }));
 
-const FONT_TH = '800 110px "Baloo Thai 2", sans-serif';
-const PATH_CACHE_KEY = 'writer.thaiPaths2';
+const FONT_TH = '800 %Fpx "Baloo Thai 2", sans-serif';
 
-/* วาดตัวอักษรลงผ้าใบเล็กๆ -> ทำให้เหลือเส้นหนา 1 พิกเซล (Zhang-Suen) -> ไล่เก็บเป็นเส้นลาก */
-const thaiPath = (function(){
-  const W = 120, H = 168, PAD = 6, idx = (x,y) => y*W + x;
-  const N8 = [[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
-  const dd = (a,b) => Math.hypot(a[0]-b[0], a[1]-b[1]);
-  const plen = p => { let l = 0; for(let i=1;i<p.length;i++) l += dd(p[i],p[i-1]); return l; };
+/* ═══════════ ก-ฮ = โหมด "ระบายให้เต็มตัว" (ไม่ใช่ลากตามจุด) ═══════════
+   ทำไมไม่ใช้จุดเหมือน A-Z: ตัวไทยมีหัว มีวงโค้ง มีเส้นซ้อน ถ้าไปไล่หา "เส้นกลาง" มาวางจุด
+   ตัวอักษรจะแตกเป็นท่อนๆ ไม่ต่อกัน ลำดับมั่ว (เจอจริงตอนทดสอบ ข 2026-08-13) — เปราะเกินไป
+   วิธีใหม่: วาดตัวอักษรจากฟอนต์ตรงๆ = รูปตรงเป๊ะ 100% ทุกตัว แล้วให้เด็กระบายให้เต็ม
+   ระบายครบตามเกณฑ์ = ผ่าน · ไม่ต้องบังคับลำดับเส้น เด็กเล็กเล่นง่ายกว่า ชูนิ้วก็ทำได้ */
+const PAINT = {
+  on:false, w:0, h:0, need:.84,
+  mask:null, mctx:null,      // ตัวอักษรทึบ ไว้ใช้ตัดสีที่ระบายเกินขอบทิ้ง
+  ghost:null,                // ตัวอักษรจางๆ ที่โชว์ให้เด็กเห็นว่าต้องระบายตรงไหน
+  pad:null, pctx:null,       // สีที่เด็กระบาย
+  out:null, octx:null,       // สีที่ระบาย ตัดเฉพาะส่วนที่อยู่ในตัวอักษร
+  spots:[], hitR:0, brush:0, pct:0, dirty:true, lastCheck:0, prev:null,
+};
 
-  function raster(ch){
-    const c = document.createElement('canvas'); c.width = W; c.height = H;
-    const g = c.getContext('2d', { willReadFrequently:true });
-    g.font = FONT_TH; g.textBaseline = 'alphabetic'; g.textAlign = 'left';
-    const m = g.measureText(ch);
+function buildPaint(){
+  const g = glyph();
+  const w = Math.max(40, Math.round(100*K)), h = Math.max(56, Math.round(140*K));
+  PAINT.w = w; PAINT.h = h;
+  const mk = () => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  PAINT.mask = mk();  PAINT.mctx = PAINT.mask.getContext('2d', { willReadFrequently:true });
+  PAINT.ghost = mk();
+  PAINT.pad = mk();   PAINT.pctx = PAINT.pad.getContext('2d', { willReadFrequently:true });
+  PAINT.out = mk();   PAINT.octx = PAINT.out.getContext('2d');
+
+  /* วางตัวอักษรให้เต็มกรอบพอดี — วัดขนาดจริงของตัวนั้นก่อน แล้วค่อยย่อ/ขยาย */
+  const fit = ctx2 => {
+    const base = 120;
+    ctx2.font = FONT_TH.replace('%F', base);
+    ctx2.textBaseline = 'alphabetic'; ctx2.textAlign = 'left';
+    const m = ctx2.measureText(g.ch);
     const bw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
     const bh = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
     if(!(bw > 0 && bh > 0)) return null;
-    const s = Math.min((W-PAD*2)/bw, (H-PAD*2)/bh);
-    g.save(); g.translate(W/2, H/2); g.scale(s, s);
-    g.translate(-(m.actualBoundingBoxRight - bw/2), (bh/2 - m.actualBoundingBoxDescent));
-    g.fillStyle = '#fff'; g.fillText(ch, 0, 0); g.restore();
-    const d = g.getImageData(0,0,W,H).data, bin = new Uint8Array(W*H);
-    for(let i=0;i<W*H;i++) bin[i] = d[i*4+3] > 110 ? 1 : 0;
-    return bin;
-  }
-  function thin(g){
-    const P = (x,y) => (x<0||y<0||x>=W||y>=H) ? 0 : g[idx(x,y)];
-    let changed = true, guard = 0;
-    while(changed && guard++ < 60){
-      changed = false;
-      for(const step of [0,1]){
-        const del = [];
-        for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++){
-          if(!P(x,y)) continue;
-          const p2=P(x,y-1),p3=P(x+1,y-1),p4=P(x+1,y),p5=P(x+1,y+1),
-                p6=P(x,y+1),p7=P(x-1,y+1),p8=P(x-1,y),p9=P(x-1,y-1);
-          const B = p2+p3+p4+p5+p6+p7+p8+p9;
-          if(B < 2 || B > 6) continue;
-          const q = [p2,p3,p4,p5,p6,p7,p8,p9,p2];
-          let A = 0; for(let i=0;i<8;i++) if(q[i]===0 && q[i+1]===1) A++;
-          if(A !== 1) continue;
-          if(step === 0){ if(p2*p4*p6 || p4*p6*p8) continue; }
-          else { if(p2*p4*p8 || p2*p6*p8) continue; }
-          del.push(idx(x,y));
-        }
-        if(del.length){ changed = true; for(const i of del) g[i] = 0; }
-      }
-    }
-    return g;
-  }
-  /* ที่ทางแยกให้ "เดินตรงต่อ" ตามทิศเดิม ไม่เลี้ยวมั่ว — เส้นจะต่อกันยาวเหมือนลายมือจริง */
-  function trace(g){
-    const at = (x,y) => (x<0||y<0||x>=W||y>=H) ? 0 : g[idx(x,y)];
-    const deg = (x,y) => N8.reduce((a,[dx,dy]) => a + at(x+dx,y+dy), 0);
-    const used = new Uint8Array(W*H), out = [];
-    const walk = (sx,sy) => {
-      const pts = [[sx,sy]]; used[idx(sx,sy)] = 1;
-      let cx = sx, cy = sy, hx = 0, hy = 0;
-      for(;;){
-        let best = null, bs = -9;
-        for(const [dx,dy] of N8){
-          const x = cx+dx, y = cy+dy;
-          if(!at(x,y) || used[idx(x,y)]) continue;
-          const L = Math.hypot(dx,dy);
-          const sc = (hx||hy) ? (dx*hx + dy*hy)/L : (L === 1 ? .1 : 0);
-          if(sc > bs){ bs = sc; best = [x,y]; }
-        }
-        if(!best) break;
-        hx = best[0]-cx; hy = best[1]-cy;
-        const L = Math.hypot(hx,hy) || 1; hx /= L; hy /= L;
-        used[idx(best[0],best[1])] = 1; pts.push(best); cx = best[0]; cy = best[1];
-      }
-      return pts;
-    };
-    for(let y=0;y<H;y++) for(let x=0;x<W;x++)
-      if(at(x,y) && !used[idx(x,y)] && deg(x,y) === 1) out.push(walk(x,y));
-    for(let y=0;y<H;y++) for(let x=0;x<W;x++)
-      if(at(x,y) && !used[idx(x,y)]) out.push(walk(x,y));
-    return out;
-  }
-  function join(ps, tol){
-    let merged = true;
-    while(merged){
-      merged = false;
-      outer:
-      for(let i=0;i<ps.length;i++) for(let j=0;j<ps.length;j++){
-        if(i === j) continue;
-        const a = ps[i], b = ps[j], as = a[0], ae = a[a.length-1], bs = b[0], be = b[b.length-1];
-        if(dd(ae,bs) <= tol){ ps[i] = a.concat(b); ps.splice(j,1); merged = true; break outer; }
-        if(dd(ae,be) <= tol){ ps[i] = a.concat(b.slice().reverse()); ps.splice(j,1); merged = true; break outer; }
-        if(dd(as,be) <= tol){ ps[i] = b.concat(a); ps.splice(j,1); merged = true; break outer; }
-        if(dd(as,bs) <= tol){ ps[i] = b.slice().reverse().concat(a); ps.splice(j,1); merged = true; break outer; }
-      }
-    }
-    return ps;
-  }
-  function rdp(pts, eps){
-    if(pts.length < 3) return pts;
-    let mx = 0, mi = 0;
-    const [ax,ay] = pts[0], [bx,by] = pts[pts.length-1];
-    const L = Math.hypot(bx-ax, by-ay) || 1;
-    for(let i=1;i<pts.length-1;i++){
-      const d = Math.abs((bx-ax)*(ay-pts[i][1]) - (ax-pts[i][0])*(by-ay)) / L;
-      if(d > mx){ mx = d; mi = i; }
-    }
-    if(mx <= eps) return [pts[0], pts[pts.length-1]];
-    return rdp(pts.slice(0,mi+1), eps).slice(0,-1).concat(rdp(pts.slice(mi), eps));
-  }
-
-  return function(ch){
-    const bin = raster(ch);
-    if(!bin) return null;
-    let ps = trace(thin(bin)).filter(p => plen(p) >= 4);
-    ps = join(ps, 5).filter(p => plen(p) >= 11);       // ตัดหนวดสั้นที่ทางแยกทิ้ง
-    if(!ps.length) return null;
-    ps = ps.map(p => (p[0][0] > p[p.length-1][0] + 2 ? p.slice().reverse() : p));
-    ps.sort((a,b) => a[0][0] - b[0][0]);               // ไทยเขียนซ้าย -> ขวา
-    return ps.map(p => rdp(p, 1.2).map(([x,y]) => [Math.round(x*100/W), Math.round(y*140/H)]));
+    const s = Math.min((w-10)/bw, (h-10)/bh);
+    ctx2.save();
+    ctx2.translate(w/2, h/2); ctx2.scale(s, s);
+    ctx2.translate(-(m.actualBoundingBoxRight - bw/2), (bh/2 - m.actualBoundingBoxDescent));
+    return { thick: Math.max(6, s*base*.13) };
   };
-})();
 
-let thaiCache = LS.get(PATH_CACHE_KEY, {});
-function thaiStrokes(ch){
-  if(thaiCache[ch]) return thaiCache[ch];
-  const p = thaiPath(ch);
-  if(!p) return null;
-  thaiCache[ch] = p;
-  LS.set(PATH_CACHE_KEY, thaiCache);
-  return p;
+  const mi = fit(PAINT.mctx);
+  if(!mi){ PAINT.on = false; return; }
+  PAINT.mctx.fillStyle = '#fff'; PAINT.mctx.fillText(g.ch, 0, 0); PAINT.mctx.restore();
+
+  const gc = PAINT.ghost.getContext('2d');
+  const gi = fit(gc);
+  gc.fillStyle = 'rgba(255,255,255,.14)'; gc.fillText(g.ch, 0, 0);
+  gc.lineWidth = 2.5; gc.strokeStyle = 'rgba(255,255,255,.55)'; gc.setLineDash([7,7]);
+  gc.strokeText(g.ch, 0, 0);
+  gc.restore();
+
+  /* จุดตรวจ: สุ่มจุดทั่วตัวอักษร ไว้นับว่าระบายไปกี่ % แล้ว */
+  const d = PAINT.mctx.getImageData(0,0,w,h).data;
+  const step = Math.max(3, Math.round(Math.min(w,h)/40));
+  PAINT.spots = [];
+  for(let y=0;y<h;y+=step) for(let x=0;x<w;x+=step)
+    if(d[(y*w+x)*4+3] > 140) PAINT.spots.push([x,y]);
+
+  /* หัวปากกาต้อง "แคบกว่าเส้นตัวอักษร" นิดนึง — ระบายทีเดียวไม่เต็ม ต้องกวาดไปมา ถึงจะได้ฝึกมือ */
+  PAINT.brush = clamp((gi ? gi.thick : 16) * .38, 8, 34);
+  PAINT.hitR = PAINT.brush;
+  PAINT.pct = 0; PAINT.dirty = true; PAINT.prev = null; PAINT.lastCheck = 0;
+  PAINT.on = PAINT.spots.length > 30;
+}
+
+function paintAt(p){
+  if(!PAINT.on || S.finished) return;
+  const x = p.x - OX, y = p.y - OY;
+  const c = PAINT.pctx;
+  c.lineCap = 'round'; c.lineJoin = 'round';
+  c.strokeStyle = '#FFD766'; c.fillStyle = '#FFD766';
+  c.lineWidth = PAINT.brush*2;
+  if(PAINT.prev){
+    c.beginPath(); c.moveTo(PAINT.prev.x, PAINT.prev.y); c.lineTo(x, y); c.stroke();
+  }else{
+    c.beginPath(); c.arc(x, y, PAINT.brush, 0, 7); c.fill();
+  }
+  PAINT.prev = { x, y };
+  PAINT.dirty = true;
+  S.lastHitAt = performance.now(); S.hinted = false;
+}
+
+function paintProgress(now){
+  if(!PAINT.on || S.finished) return;
+  if(now - PAINT.lastCheck < 180) return;
+  PAINT.lastCheck = now;
+  const w = PAINT.w, h = PAINT.h;
+  const d = PAINT.pctx.getImageData(0,0,w,h).data;
+  let hit = 0;
+  for(const [x,y] of PAINT.spots) if(d[(y*w+x)*4+3] > 60) hit++;
+  PAINT.pct = PAINT.spots.length ? hit/PAINT.spots.length : 0;
+  if(PAINT.pct >= PAINT.need) finishGlyph();
+}
+
+function drawPaint(now){
+  if(!PAINT.on) return;
+  ctx.drawImage(PAINT.ghost, OX, OY);
+  if(PAINT.dirty){
+    PAINT.octx.clearRect(0,0,PAINT.w,PAINT.h);
+    PAINT.octx.globalCompositeOperation = 'source-over';
+    PAINT.octx.drawImage(PAINT.pad, 0, 0);
+    PAINT.octx.globalCompositeOperation = 'destination-in';   // ระบายเกินขอบไม่โชว์ ตัวอักษรเลยสวยเสมอ
+    PAINT.octx.drawImage(PAINT.mask, 0, 0);
+    PAINT.octx.globalCompositeOperation = 'source-over';
+    PAINT.dirty = false;
+  }
+  ctx.save();
+  ctx.shadowColor = 'rgba(255,197,61,.55)'; ctx.shadowBlur = S.finished ? 22 : 8;
+  ctx.drawImage(PAINT.out, OX, OY);
+  ctx.restore();
+
+  if(!S.finished){
+    const p = clamp(PAINT.pct/PAINT.need, 0, 1);
+    const bw = Math.min(PAINT.w, 260), bx = OX + (PAINT.w-bw)/2, by = OY + PAINT.h + 14;
+    /* ❌ ห้ามใช้ ctx.roundRect — Safari เก่า (iPad ต่ำกว่า 16.4) ไม่มี แล้วลูปวาดพังทั้งจอ */
+    const bar = (x,w2,col) => {
+      const r = 6;
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.moveTo(x+r, by); ctx.arcTo(x+w2, by, x+w2, by+12, r);
+      ctx.arcTo(x+w2, by+12, x, by+12, r); ctx.arcTo(x, by+12, x, by, r);
+      ctx.arcTo(x, by, x+w2, by, r); ctx.closePath(); ctx.fill();
+    };
+    bar(bx, bw, 'rgba(255,255,255,.16)');
+    bar(bx, Math.max(14, bw*p), '#FFC53D');
+    ctx.font = '800 15px "Baloo Thai 2", system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    ctx.fillText('ระบายแล้ว ' + Math.round(p*100) + '%', OX + PAINT.w/2, by + 18);
+    /* จุดกะพริบชวนให้เริ่ม — ตอนยังไม่ได้ระบายอะไรเลย */
+    if(PAINT.pct < .02 && PAINT.spots.length){
+      const s = PAINT.spots[0];
+      const pulse = 1 + Math.sin(now/220)*.2;
+      ctx.fillStyle = 'rgba(255,197,61,.9)';
+      ctx.beginPath(); ctx.arc(OX+s[0], OY+s[1], 13*pulse, 0, 7); ctx.fill();
+    }
+  }
 }
 
 /* ---------- state ---------- */
@@ -566,9 +575,12 @@ function resize(){
   ctx.setTransform(DPR,0,0,DPR,0,0);
   const hud = document.querySelector('.hud');
   TOPPAD = (hud ? hud.offsetHeight : 140) + 14;
-  K  = Math.min((CW-44)/100, (CH-TOPPAD-40)/140);
+  /* โหมดระบายต้องเผื่อที่ให้แถบความคืบหน้าใต้ตัวอักษรด้วย */
+  const bot = isPaintSet() ? 92 : 40;
+  K  = Math.min((CW-44)/100, (CH-TOPPAD-bot)/140);
   OX = (CW - 100*K)/2;
-  OY = TOPPAD + (CH - TOPPAD - 140*K)/2 - 6;
+  OY = TOPPAD + (CH - TOPPAD - bot - 140*K)/2 - 6 + (isPaintSet() ? 0 : 0);
+  if(isPaintSet() && S.screen === 'play' && PAINT.on) buildPaint();   // ขนาดเปลี่ยน = สร้างผืนใหม่
 }
 window.addEventListener('resize', () => { if(S.screen==='play') resize(); });
 window.addEventListener('orientationchange', () => setTimeout(()=>{ if(S.screen==='play') resize(); }, 250));
@@ -829,15 +841,22 @@ function resample(pts, gap){
   return out;
 }
 
+const isPaintSet = () => S.set === 'thai';
+
 function loadGlyph(){
   const g = glyph();
-  if(!g.strokes){                                  // ตัวไทย: ดึงเส้นจากฟอนต์ครั้งแรกที่เปิดตัวนั้น
-    const p = thaiStrokes(g.ch);
-    if(!p){ toast('ตัวนี้เตรียมไม่ได้ ลองตัวอื่นก่อนนะ'); return; }
-    g.strokes = p;
-  }
   S.si = 0; S.di = 0; S.finished = false;
   S.trail = []; S.penPrev = null; S.lastHitAt = performance.now(); S.hinted = false;
+  if(isPaintSet()){                                // ก-ฮ = โหมดระบาย ไม่มีจุดให้ไล่
+    S.strokes = [];
+    buildPaint();
+    $('#pEm').textContent = g.p;
+    $('#pTxt').textContent = g.ch + ' · ' + g.th;
+    $('#cele').classList.remove('on');
+    paintGRow();
+    return;
+  }
+  PAINT.on = false;
   S.strokes = g.strokes.map(pts => {
     const fine = resample(pts, CFG.FINE);
     const dots = resample(pts, CFG.DOT_GAP).map(d => {
@@ -940,7 +959,11 @@ function drawBoard(now){
     }
   }
 
-  /* หางปากกา */
+  drawPen(now);
+}
+
+/* หางปากกา + เคอร์เซอร์นิ้ว + คำใบ้ตอนค้างนาน — ใช้ร่วมกันทั้งโหมดจุดและโหมดระบาย */
+function drawPen(now){
   S.trail = S.trail.filter(p => now - p.t < 450);
   S.trail.forEach(p => {
     const a = 1 - (now - p.t)/450;
@@ -948,23 +971,27 @@ function drawBoard(now){
     ctx.beginPath(); ctx.arc(p.x, p.y, 4 + a*7, 0, 7); ctx.fill();
   });
 
-  /* เคอร์เซอร์ปากกา (โหมดชูนิ้ว) */
   if(useCam() && !S.camFail && S.ptr && !S.finished){
+    const r = isPaintSet() ? Math.max(10, PAINT.brush) : 8;
     ctx.save();
-    ctx.beginPath(); ctx.arc(S.ptr.x, S.ptr.y, 16, 0, 7);
+    ctx.beginPath(); ctx.arc(S.ptr.x, S.ptr.y, r+8, 0, 7);
     ctx.fillStyle = 'rgba(255,197,61,.25)'; ctx.fill();
-    ctx.beginPath(); ctx.arc(S.ptr.x, S.ptr.y, 8, 0, 7);
+    ctx.beginPath(); ctx.arc(S.ptr.x, S.ptr.y, r, 0, 7);
     ctx.fillStyle = '#FFC53D'; ctx.fill();
     ctx.lineWidth = 3; ctx.strokeStyle = '#fff';
-    ctx.beginPath(); ctx.arc(S.ptr.x, S.ptr.y, 8, 0, 7); ctx.stroke();
+    ctx.beginPath(); ctx.arc(S.ptr.x, S.ptr.y, r, 0, 7); ctx.stroke();
     ctx.restore();
   }
 
-  /* ค้างนานไม่ขยับ = ใบ้ */
   if(S.running && !S.finished && now - S.lastHitAt > 7000 && !S.hinted){
     S.hinted = true;
-    hint(useCam() ? 'เล็งนิ้วที่จุดทองกะพริบ แล้วลากตามจุด' : 'เริ่มลากจากจุดทองกะพริบนะ');
-    speak('ลากตามจุดนะ','th');
+    if(isPaintSet()){
+      hint(useCam() ? 'เอานิ้วระบายให้เต็มตัวอักษรเลย' : 'ใช้นิ้วระบายให้เต็มตัวอักษร');
+      speak('ระบายให้เต็มตัวนะ','th');
+    }else{
+      hint(useCam() ? 'เล็งนิ้วที่จุดทองกะพริบ แล้วลากตามจุด' : 'เริ่มลากจากจุดทองกะพริบนะ');
+      speak('ลากตามจุดนะ','th');
+    }
   }
 }
 
@@ -979,7 +1006,9 @@ function segNear(a, b, c, r){
   return Math.hypot(a.x + dx*t - c.x, a.y + dy*t - c.y) < r;
 }
 function handlePen(p, now){
-  if(S.finished || !S.strokes.length) return;
+  if(S.finished) return;
+  if(isPaintSet()){ S.trail.push({ ...p, t: now }); paintAt(p); return; }
+  if(!S.strokes.length) return;
   S.trail.push({ ...p, t: now });
   const st = S.strokes[S.si];
   const R = hitR();
@@ -1013,7 +1042,7 @@ cv.addEventListener('pointerdown', e => {
   if(S.screen !== 'play') return;
   ac();
   S.drawing = true;
-  S.penPrev = null;                     // เริ่มแตะใหม่ = ไม่ลากเส้นต่อจากจุดที่ยกนิ้วไป
+  S.penPrev = null; PAINT.prev = null;   // เริ่มแตะใหม่ = ไม่ลากเส้นต่อจากจุดที่ยกนิ้วไป
   try{ cv.setPointerCapture(e.pointerId); }catch{}
   handlePen(toXY(e), performance.now());
 });
@@ -1092,7 +1121,11 @@ function loop(now){
   }
   /* โหมดชูนิ้ว: นิ้วคือปากกา ลากผ่านจุดได้ตลอดเวลา (จุดบังคับเรียงลำดับ กันเขียนมั่วเอง) */
   if(S.running && useCam() && !S.camFail && S.ptr && !S.finished) handlePen(S.ptr, now);
-  drawBoard(now);
+  if(isPaintSet()){
+    drawPaint(now);
+    if(S.running) paintProgress(now);
+    drawPen(now);
+  }else drawBoard(now);
 
   fpsN++;
   if(now - fpsAt > 500){
@@ -1128,7 +1161,7 @@ async function start(){
   $('#diagTag').classList.remove('on');
   resize();
   /* ตัวไทยดึงเส้นจากฟอนต์ — ต้องรอฟอนต์โหลดจริงก่อน ไม่งั้นได้รูปจากฟอนต์สำรองที่หน้าตาไม่เหมือน */
-  if(S.set === 'thai'){ try{ await document.fonts.load(FONT_TH); }catch{} }
+  if(isPaintSet()){ try{ await document.fonts.load(FONT_TH.replace('%F', 120)); }catch{} }
   loadGlyph();
   cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
 
@@ -1247,7 +1280,7 @@ if(!window.isSecureContext || !(navigator.mediaDevices && navigator.mediaDevices
 }
 
 /* debug handle — ไว้ทดสอบอัตโนมัติ ไม่กระทบเกม */
-window.JK = { S, start, quit, loadGlyph, handlePen, gpx, glyph, show, GLYPHS };
+window.JK = { S, start, quit, loadGlyph, handlePen, gpx, glyph, show, GLYPHS, PAINT, paintProgress, buildPaint, drawPaint, drawPen };
 </script>
 </body>
 </html>
