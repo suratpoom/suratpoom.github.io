@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="ซาฟารีคำศัพท์">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="jaokun-icon-180.png">
-<title>ซาฟารีคำศัพท์ v1.1 — เกมจับศัพท์อังกฤษ</title>
+<title>ซาฟารีคำศัพท์ v1.2 — เกมจับศัพท์อังกฤษ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Thai+2:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -248,11 +248,7 @@ a{color:inherit;text-decoration:none}
 
   <div class="card">
     <p class="lbl">เลือกหมวดคำศัพท์ <b id="catCount">1 หมวด</b></p>
-    <div class="chips" id="catChips">
-      <button class="chip ct" data-c="animal" aria-pressed="true">สัตว์</button>
-      <button class="chip ct" data-c="fruit"  aria-pressed="false">ผลไม้</button>
-      <button class="chip ct" data-c="color"  aria-pressed="false">สี</button>
-    </div>
+    <div class="chips" id="catChips"></div>
   </div>
 
   <div class="card">
@@ -296,7 +292,7 @@ a{color:inherit;text-decoration:none}
   </div>
 
   <p class="note">ขึ้นข้อใหม่จะอ่านคำศัพท์ให้ฟังทันที ช้าๆ ชัดๆ 2 รอบ<br>แตะรูปลำโพงเพื่อฟังซ้ำได้ตลอด</p>
-  <p class="ver">ซาฟารีคำศัพท์ v1.1 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
+  <p class="ver">ซาฟารีคำศัพท์ v1.2 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
 
  </div></div>
 </section>
@@ -377,7 +373,7 @@ a{color:inherit;text-decoration:none}
    engine กล้อง+จับมือชุดเดียวกับเกมคิดเลข v1.7
    ═══════════════════════════════════════════════ */
 
-const VERSION = 'v1.1';
+const VERSION = 'v1.2';
 const GAME    = 'word';
 const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzx7tZYRunES9Gfi0zOIb0Amz-kzp_LMdFhQzgJetRychRwso_vFuleXi0nbPdGjT5r/exec';
 
@@ -392,8 +388,11 @@ const CFG = {
 const PALETTE = [['#FFB27A','#F4436C'],['#7FF3E4','#0E9F9E'],['#D6C7FF','#7C3AED'],
                  ['#FFE08A','#E09B00'],['#A5F3A0','#15803D'],['#9AD5FF','#1D6FD6']];
 
-/* ═══════════ คลังคำศัพท์ ═══════════ */
-const CAT_TH = { animal:'สัตว์', fruit:'ผลไม้', color:'สี' };
+/* ═══════════ คลังคำศัพท์ ═══════════
+   ชุดนี้คือ "ตัวสำรองในเครื่อง" — ใช้ตอนต่อชีทไม่ได้ (ออฟไลน์ / ชีทล่ม)
+   ตัวจริงที่ใช้เล่นมาจากแท็บ Words ในชีท ดู § คลังคำจากชีท ด้านล่าง
+   ⚠️ แก้ตรงนี้แล้วชีทไม่เปลี่ยนตาม — ถ้าจะเพิ่มคำถาวร เพิ่มในชีท */
+const CAT_TH = { animal:'สัตว์', fruit:'ผลไม้', color:'สี', home:'ของใช้ในบ้าน', veg:'ผัก', vehicle:'ยานพาหนะ' };
 const BANK = {
   animal: [
     {p:'🐘',en:'ELEPHANT',th:'ช้าง'},   {p:'🐶',en:'DOG',th:'หมา'},        {p:'🐱',en:'CAT',th:'แมว'},
@@ -410,7 +409,7 @@ const BANK = {
     {p:'🍉',en:'WATERMELON',th:'แตงโม'},{p:'🍇',en:'GRAPES',th:'องุ่น'},   {p:'🍍',en:'PINEAPPLE',th:'สับปะรด'},
     {p:'🥭',en:'MANGO',th:'มะม่วง'},    {p:'🍓',en:'STRAWBERRY',th:'สตรอว์เบอร์รี'}, {p:'🥥',en:'COCONUT',th:'มะพร้าว'},
     {p:'🍋',en:'LEMON',th:'มะนาว'},     {p:'🍑',en:'PEACH',th:'ลูกพีช'},   {p:'🍐',en:'PEAR',th:'ลูกแพร์'},
-    {p:'🍒',en:'CHERRY',th:'เชอร์รี'},  {p:'🍅',en:'TOMATO',th:'มะเขือเทศ'},{p:'🌽',en:'CORN',th:'ข้าวโพด'},
+    {p:'🍒',en:'CHERRY',th:'เชอร์รี'},  {p:'🍅',en:'TOMATO',th:'มะเขือเทศ'},
   ],
   color: [
     {p:'🔴',en:'RED',th:'สีแดง'},       {p:'🟠',en:'ORANGE',th:'สีส้ม'},   {p:'🟡',en:'YELLOW',th:'สีเหลือง'},
@@ -418,7 +417,71 @@ const BANK = {
     {p:'🟤',en:'BROWN',th:'สีน้ำตาล'},  {p:'⚫',en:'BLACK',th:'สีดำ'},     {p:'⚪',en:'WHITE',th:'สีขาว'},
     {p:'🩷',en:'PINK',th:'สีชมพู'},
   ],
+  home: [
+    {p:'🪑',en:'CHAIR',th:'เก้าอี้'},   {p:'🛏️',en:'BED',th:'เตียง'},      {p:'🚪',en:'DOOR',th:'ประตู'},
+    {p:'🪟',en:'WINDOW',th:'หน้าต่าง'}, {p:'🕰️',en:'CLOCK',th:'นาฬิกา'},   {p:'📺',en:'TV',th:'โทรทัศน์'},
+    {p:'☎️',en:'PHONE',th:'โทรศัพท์'},  {p:'🥄',en:'SPOON',th:'ช้อน'},     {p:'🍴',en:'FORK',th:'ส้อม'},
+    {p:'🔪',en:'KNIFE',th:'มีด'},       {p:'🥣',en:'BOWL',th:'ชาม'},       {p:'🍽️',en:'PLATE',th:'จาน'},
+    {p:'🥤',en:'CUP',th:'แก้วน้ำ'},     {p:'🧼',en:'SOAP',th:'สบู่'},      {p:'🪥',en:'TOOTHBRUSH',th:'แปรงสีฟัน'},
+    {p:'🧹',en:'BROOM',th:'ไม้กวาด'},   {p:'💡',en:'LAMP',th:'โคมไฟ'},     {p:'🔑',en:'KEY',th:'กุญแจ'},
+    {p:'📚',en:'BOOK',th:'หนังสือ'},    {p:'✏️',en:'PENCIL',th:'ดินสอ'},   {p:'🪞',en:'MIRROR',th:'กระจก'},
+    {p:'🧦',en:'SOCK',th:'ถุงเท้า'},    {p:'👕',en:'SHIRT',th:'เสื้อ'},    {p:'🧢',en:'CAP',th:'หมวก'},
+  ],
+  veg: [
+    {p:'🥕',en:'CARROT',th:'แครอท'},    {p:'🥬',en:'CABBAGE',th:'กะหล่ำปลี'},{p:'🥦',en:'BROCCOLI',th:'บรอกโคลี'},
+    {p:'🌽',en:'CORN',th:'ข้าวโพด'},    {p:'🍆',en:'EGGPLANT',th:'มะเขือ'}, {p:'🌶️',en:'CHILI',th:'พริก'},
+    {p:'🧅',en:'ONION',th:'หัวหอม'},    {p:'🧄',en:'GARLIC',th:'กระเทียม'}, {p:'🥔',en:'POTATO',th:'มันฝรั่ง'},
+    {p:'🍄',en:'MUSHROOM',th:'เห็ด'},   {p:'🎃',en:'PUMPKIN',th:'ฟักทอง'},  {p:'🥒',en:'CUCUMBER',th:'แตงกวา'},
+    {p:'🍠',en:'YAM',th:'มันเทศ'},      {p:'🥜',en:'PEANUT',th:'ถั่วลิสง'},  {p:'🫘',en:'BEAN',th:'ถั่ว'},
+  ],
+  vehicle: [
+    {p:'🚗',en:'CAR',th:'รถยนต์'},      {p:'🚌',en:'BUS',th:'รถบัส'},       {p:'🚕',en:'TAXI',th:'แท็กซี่'},
+    {p:'🚑',en:'AMBULANCE',th:'รถพยาบาล'},{p:'🚚',en:'TRUCK',th:'รถบรรทุก'},{p:'🚲',en:'BICYCLE',th:'จักรยาน'},
+    {p:'🏍️',en:'MOTORBIKE',th:'มอเตอร์ไซค์'},{p:'🛺',en:'TUKTUK',th:'ตุ๊กตุ๊ก'},{p:'🚂',en:'TRAIN',th:'รถไฟ'},
+    {p:'✈️',en:'PLANE',th:'เครื่องบิน'},{p:'🚁',en:'HELICOPTER',th:'เฮลิคอปเตอร์'},{p:'🚢',en:'SHIP',th:'เรือใหญ่'},
+    {p:'⛵',en:'BOAT',th:'เรือใบ'},     {p:'🚀',en:'ROCKET',th:'จรวด'},     {p:'🛴',en:'SCOOTER',th:'สกู๊ตเตอร์'},
+  ],
 };
+
+/* ═══════════ คลังคำจากชีท (แท็บ Words) ═══════════
+   ทั้ง Surat และ Claude เพิ่ม/แก้คำได้ที่ชีทโดยตรง ไม่ต้อง deploy แอปใหม่
+   ลำดับการใช้: คำที่โหลดจากชีทครั้งก่อน (เก็บในเครื่อง) -> ยิงถามชีทใหม่เบื้องหลัง -> ไม่ได้เลยค่อยใช้ BANK
+   ครั้งแรกสุดที่ชีทยังว่าง แอปจะส่งคลังในเครื่องขึ้นไปตั้งต้นให้ (seed) แล้วชีทเป็นเจ้าของข้อมูลต่อจากนั้น */
+const PACK_KEY = 'word.pack';
+let PACK = null;                                  // { cats:[{key,th,words:[{p,en,th}]}] , at }
+
+function packFromBank(){
+  return { cats: Object.keys(BANK).map(k => ({ key:k, th:CAT_TH[k] || k, words:BANK[k] })), at:0, src:'ในเครื่อง' };
+}
+function usePack(p){
+  if(!p || !Array.isArray(p.cats) || !p.cats.length) return false;
+  const cats = p.cats.filter(c => c && c.key && Array.isArray(c.words) && c.words.length >= 3);
+  if(!cats.length) return false;
+  PACK = { ...p, cats };
+  return true;
+}
+const catOf = k => PACK.cats.find(c => c.key === k);
+const allWords = () => PACK.cats.flatMap(c => c.words.map(w => ({ ...w, cat:c.key })));
+
+async function loadPack(){
+  if(!S.gas) return;
+  try{
+    const r = await fetch(S.gas + (S.gas.includes('?')?'&':'?') + 'action=words', { method:'GET' });
+    const j = await r.json();
+    if(!j || !j.ok) return;
+    if(j.empty){                                  // ชีทยังว่าง -> ส่งคลังในเครื่องขึ้นไปตั้งต้น
+      const seed = packFromBank();
+      await fetch(S.gas, {
+        method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action:'seedwords', cats: seed.cats.map(c => ({
+          key:c.key, th:c.th, words:c.words.map(w => [w.p, w.en, w.th]) })) }),
+      });
+      return;
+    }
+    const p = { cats:(j.cats||[]).map(c => ({ key:c.key, th:c.th, words:(c.words||[]).map(w => ({p:w[0], en:w[1], th:w[2]})) })), at:Date.now(), src:'ชีท' };
+    if(usePack(p)){ LS.set(PACK_KEY, p); paintChips(); }
+  }catch{}
+}
 
 /* ---------- helpers ---------- */
 const $  = s => document.querySelector(s);
@@ -566,7 +629,7 @@ const sayQ = () => { if(S.q) sayEN(S.q.en.toLowerCase(), 2); };
 /* ═══════════ สร้างชุดโจทย์ 10 ข้อ — ไม่ซ้ำในรอบ ตัวลวงหมวดเดียวกันก่อน
    กันคำซ้ำกันเองในตัวเลือก (ORANGE มีทั้งหมวดผลไม้และหมวดสี) */
 function buildRound(){
-  const all = S.cats.flatMap(c => BANK[c].map(w => ({...w, cat:c})));
+  const all = S.cats.flatMap(k => ((catOf(k) || {}).words || []).map(w => ({...w, cat:k})));
   const picks = shuffle([...all]).slice(0, CFG.ROUND);
   while(picks.length < CFG.ROUND) picks.push(all[ri(0, all.length-1)]);   // หมวดเดียวคำน้อย -> ยอมซ้ำท้ายรอบ
   S.qs = picks.map(ans => {
@@ -1381,7 +1444,7 @@ function finish(){
   sendScore({
     game: GAME,
     name: S.name,
-    cats: S.cats.map(c => CAT_TH[c]).join('+'),
+    cats: S.cats.map(k => (catOf(k) || {}).th || k).join('+'),
     mode: WM_TH[S.wmode] || S.wmode,
     play: PLAY_TH[S.play] || S.play,
     choices: S.count,
@@ -1482,8 +1545,11 @@ function closeModal(){ $('#mask').classList.remove('on'); }
 $('#mask').addEventListener('click', e => { if(e.target.id === 'mask') closeModal(); });
 
 function paintChips(){
-  $$('#catChips .chip').forEach(c => c.setAttribute('aria-pressed', S.cats.includes(c.dataset.c)));
-  $('#catCount').textContent = `${S.cats.length} หมวด`;
+  if(PACK){
+    $('#catChips').innerHTML = PACK.cats.map(c =>
+      `<button class="chip ct" data-c="${esc(c.key)}" aria-pressed="${S.cats.includes(c.key)}">${esc(c.th)}</button>`).join('');
+    $('#catCount').textContent = `${S.cats.length} หมวด`;
+  }
   $$('#wmChips .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.w === S.wmode));
   $$('#cntChips .chip').forEach(c => c.setAttribute('aria-pressed', +c.dataset.c === S.count));
 
@@ -1618,7 +1684,12 @@ document.addEventListener('visibilitychange', () => {
 
 /* ---------- boot ---------- */
 $('#pname').value = S.name;
-if(!Array.isArray(S.cats) || !S.cats.length || S.cats.some(c => !BANK[c])) S.cats = ['animal'];
+/* คลังคำ: ใช้ของที่โหลดจากชีทไว้รอบก่อนทันที (เปิดมาเล่นได้เลย ไม่ต้องรอเน็ต)
+   แล้วค่อยยิงถามชีทเบื้องหลัง ได้ของใหม่ค่อยเปลี่ยนชิปหมวดให้เอง */
+if(!usePack(LS.get(PACK_KEY, null))) usePack(packFromBank());
+if(!Array.isArray(S.cats) || !S.cats.length) S.cats = [PACK.cats[0].key];
+S.cats = S.cats.filter(k => catOf(k));
+if(!S.cats.length) S.cats = [PACK.cats[0].key];
 if(!['read','listen'].includes(S.wmode)) S.wmode = 'read';
 if(![3,4,5,6].includes(S.count)) S.count = 3;
 if(!['hold','slash','tap'].includes(S.play)) S.play = 'hold';
@@ -1632,8 +1703,10 @@ if(!window.isSecureContext || !(navigator.mediaDevices && navigator.mediaDevices
   paintChips();
 }
 
+loadPack();                                   // ขอคลังคำล่าสุดจากชีทเบื้องหลัง
+
 /* debug handle — ไว้ทดสอบอัตโนมัติ ไม่กระทบเกม */
-window.JK = { S, start, quit, pick, buildRound, show };
+window.JK = { S, start, quit, pick, buildRound, show, loadPack, getPack: () => PACK, BANK };
 </script>
 </body>
 </html>

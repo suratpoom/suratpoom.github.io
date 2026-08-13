@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="สวนสัตว์ความจำ">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="jaokun-icon-180.png">
-<title>สวนสัตว์ความจำ v1.1 — เกมฝึกความจำ</title>
+<title>สวนสัตว์ความจำ v1.2 — เกมฝึกความจำ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Thai+2:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -230,6 +230,15 @@ a{color:inherit;text-decoration:none}
   </div>
 
   <div class="card">
+    <p class="lbl">เริ่มที่ระดับไหน</p>
+    <div class="chips" id="rsChips">
+      <button class="chip rs" data-r="1" aria-pressed="true">ต่อจากเดิม</button>
+      <button class="chip rs" data-r="0" aria-pressed="false">เริ่มใหม่ 2 ตัว</button>
+    </div>
+    <p class="note" id="rsNote" style="margin-top:9px;text-align:left"></p>
+  </div>
+
+  <div class="card">
     <p class="lbl">ความเร็ว</p>
     <div class="chips" id="spChips">
       <button class="chip sp" data-s="1050" aria-pressed="true">ช้า</button>
@@ -260,7 +269,7 @@ a{color:inherit;text-decoration:none}
   </div>
 
   <p class="note">เริ่มจากสัตว์ 2 ตัว จำ 2 ตัว<br>ผ่านรอบนึง = เพื่อนใหม่ 1 ตัว + ลำดับยาวขึ้น<br>พลาดได้ 3 ครั้ง</p>
-  <p class="ver">สวนสัตว์ความจำ v1.1 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
+  <p class="ver">สวนสัตว์ความจำ v1.2 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
 
  </div></div>
 </section>
@@ -339,7 +348,7 @@ a{color:inherit;text-decoration:none}
    engine กล้อง+จับมือชุดเดียวกับเกมคิดเลข v1.7
    ═══════════════════════════════════════════════ */
 
-const VERSION = 'v1.1';
+const VERSION = 'v1.2';
 const GAME    = 'memory';
 const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzx7tZYRunES9Gfi0zOIb0Amz-kzp_LMdFhQzgJetRychRwso_vFuleXi0nbPdGjT5r/exec';
 
@@ -378,6 +387,7 @@ const S = {
   name: LS.get('name','เจ้าคุณ'),
   pads: LS.get('mem.pads',4),
   speed: LS.get('mem.speed',1050),
+  resume: LS.get('mem.resume',true),      // เริ่มต่อจากระดับที่เคยทำได้ ไม่ต้องไล่จากง่ายทุกครั้ง
   play: LS.get('mem.play','hold'),        // hold · tap (หั่นมือไม่เหมาะกับเกมจำ — ฟันพลาดง่าย)
   useVox: LS.get('useVox',true),
   gas: LS.get('gas', GAS_URL_DEFAULT),
@@ -392,6 +402,8 @@ const S = {
 };
 
 const useCam = () => S.play !== 'tap';
+/* ระดับที่จะเริ่ม — ต่ำกว่าสถิติเดิม 2 ขั้น (อย่างน้อย 2) · ยังไม่มีสถิติ = เริ่ม 2 */
+const startLevel = () => (S.resume && S.best >= 4) ? clamp(S.best - 2, CFG.START_LEN, 12) : CFG.START_LEN;
 const PLAY_TH  = { hold:'ลากมือ', tap:'แตะจอ' };
 const SPEED_TH = { 1050:'ช้า', 820:'ปกติ', 620:'เร็ว' };
 
@@ -1038,10 +1050,12 @@ async function start(){
   LS.set('name', S.name);
 
   show('play');
-  /* รอบแรกโชว์แค่ 2 ตัว แล้วเพิ่มทีละตัวทุกรอบจนครบที่ตั้งไว้ — ค่อยๆ ยาก ไม่ท่วมตั้งแต่รอบแรก */
+  /* รอบแรกโชว์แค่ 2 ตัว แล้วเพิ่มทีละตัวทุกรอบจนครบที่ตั้งไว้ — ค่อยๆ ยาก ไม่ท่วมตั้งแต่รอบแรก
+     ถ้าเคยทำได้แล้ว เริ่มต่อที่ "ต่ำกว่าสถิติ 2 ขั้น" — ไม่ต้องไล่จากง่ายทุกครั้ง แต่ยังได้อุ่นเครื่อง */
+  const startLen = startLevel();
   S.pool = shuffle([...ZOO]).slice(0, S.pads);
-  S.animals = S.pool.slice(0, Math.min(CFG.START_PADS, S.pool.length));
-  S.seq = Array.from({ length: CFG.START_LEN }, () => ri(0, S.animals.length-1));
+  S.animals = S.pool.slice(0, clamp(startLen, CFG.START_PADS, S.pool.length));
+  S.seq = Array.from({ length: startLen }, () => ri(0, S.animals.length-1));
   S.step = 0; S.lives = CFG.LIVES; S.rounds = 0; S.maxDone = 0;
   S.phase = 'idle'; S.running = false;
   S.ptr = null; S.pprev = null; S.pv = 0; S.trail = []; S.pauseAt = 0; S.armFrom = null;
@@ -1237,6 +1251,10 @@ $('#mask').addEventListener('click', e => { if(e.target.id === 'mask') closeModa
 function paintChips(){
   $$('#nChips .chip').forEach(c => c.setAttribute('aria-pressed', +c.dataset.n === S.pads));
   $$('#spChips .chip').forEach(c => c.setAttribute('aria-pressed', +c.dataset.s === S.speed));
+  $$('#rsChips .rs').forEach(c => c.setAttribute('aria-pressed', (c.dataset.r === '1') === !!S.resume));
+  $('#rsNote').textContent = !S.best ? 'ยังไม่มีสถิติ เริ่มที่ 2 ตัว'
+    : S.resume ? `สถิติเดิม ${S.best} ตัว → เริ่มที่ ${startLevel()} ตัว`
+    : `สถิติเดิม ${S.best} ตัว แต่จะเริ่มที่ 2 ตัว`;
 
   const camOK = window.isSecureContext && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   $$('#playChips .chip').forEach(c => {
@@ -1259,6 +1277,10 @@ function paintChips(){
 $('#nChips').addEventListener('click', e => {
   const c = e.target.closest('.chip'); if(!c) return;
   S.pads = +c.dataset.n; LS.set('mem.pads', S.pads); paintChips(); tone(700,0,.06,'square',.06);
+});
+$('#rsChips').addEventListener('click', e => {
+  const c = e.target.closest('.chip'); if(!c) return;
+  S.resume = c.dataset.r === '1'; LS.set('mem.resume', S.resume); paintChips(); tone(700,0,.06,'square',.06);
 });
 $('#spChips').addEventListener('click', e => {
   const c = e.target.closest('.chip'); if(!c) return;
