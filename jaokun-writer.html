@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="นักเขียนตัวน้อย">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="jaokun-icon-180.png">
-<title>นักเขียนตัวน้อย v1.1 — เกมลากเส้นเขียนตัวอักษร</title>
+<title>นักเขียนตัวน้อย v1.2 — เกมลากเส้นเขียนตัวอักษร</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Thai+2:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -171,9 +171,9 @@ a{color:inherit;text-decoration:none}
   <div class="card">
     <p class="lbl">จะเขียนอะไรดี</p>
     <div class="chips" id="setChips">
-      <button class="chip st" data-s="abc" aria-pressed="true">A-Z</button>
-      <button class="chip st" data-s="num" aria-pressed="false">0-9</button>
-      <button class="chip soon" id="thaiChip">ก ไก่</button>
+      <button class="chip st" data-s="abc"  aria-pressed="true">A-Z</button>
+      <button class="chip st" data-s="num"  aria-pressed="false">0-9</button>
+      <button class="chip st" data-s="thai" aria-pressed="false">ก-ฮ</button>
     </div>
   </div>
 
@@ -194,8 +194,8 @@ a{color:inherit;text-decoration:none}
     <button class="btn go" id="btnStart">เริ่มเขียน</button>
   </div>
 
-  <p class="note">เขียนครบตัว ตัวอักษรจะกลายเป็นรูปพร้อมเสียงอ่าน<br>A = Apple 🍎 · เลข 3 = ลูกเจี๊ยบ 3 ตัว</p>
-  <p class="ver">นักเขียนตัวน้อย v1.1</p>
+  <p class="note">เขียนครบตัว ตัวอักษรจะกลายเป็นรูปพร้อมเสียงอ่าน<br>A = Apple 🍎 · เลข 3 = ลูกเจี๊ยบ 3 ตัว · ก = ไก่ 🐔<br>ก-ฮ ครบ 44 ตัว เขียนบนจอได้เลย</p>
+  <p class="ver">นักเขียนตัวน้อย v1.2</p>
 
  </div></div>
 </section>
@@ -243,11 +243,11 @@ a{color:inherit;text-decoration:none}
 
 <script type="module">
 /* ═══════════════════════════════════════════════
-   นักเขียนตัวน้อย v1.0 — ลากเส้นเขียน A-Z, 0-9
+   นักเขียนตัวน้อย v1.2 — ลากเส้นเขียน A-Z, 0-9 และ ก-ฮ ครบ 44 ตัว
    โหมดชูนิ้วเขียนกลางอากาศ ใช้ engine กล้องชุดเดียวกับเกมคิดเลข v1.7
    ═══════════════════════════════════════════════ */
 
-const VERSION = 'v1.0';
+const VERSION = 'v1.2';
 
 const CFG = {
   SMOOTH: .55,          /* ปากกาต้องนิ่งกว่าเกมจับบอล — ลด smooth ลงให้หายสั่น */
@@ -320,6 +320,157 @@ const GLYPHS = {
     ][n],
   })),
 };
+
+/* ═══════════ ก-ฮ 44 ตัว ═══════════
+   เส้นลากของตัวไทย "ดึงจากโครงกลางของฟอนต์จริง" ตอนเปิดใช้ครั้งแรก แล้วจำไว้ในเครื่อง
+   ❌ ไม่เขียนพิกัดเองทีละตัว — 44 ตัวมีหัว มีหาง มีวงโค้ง เขียนมือยังไงก็เพี้ยน
+   ✅ ดึงจากฟอนต์ = รูปตรงกับตัวอักษรจริงทุกตัว แถมได้ลำดับจุดต่อเนื่องให้ลากตาม */
+const THAI = [
+  ['ก','🐔','ไก่'],   ['ข','🥚','ไข่'],    ['ฃ','🍾','ขวด'],   ['ค','🐃','ควาย'],
+  ['ฅ','🧑','คน'],    ['ฆ','🔔','ระฆัง'],  ['ง','🐍','งู'],    ['จ','🍽️','จาน'],
+  ['ฉ','🎶','ฉิ่ง'],   ['ช','🐘','ช้าง'],   ['ซ','⛓️','โซ่'],   ['ฌ','🌳','เฌอ'],
+  ['ญ','👩','หญิง'],  ['ฎ','👑','ชฎา'],    ['ฏ','🔱','ปฏัก'],  ['ฐ','🏛️','ฐาน'],
+  ['ฑ','👸','มณโฑ'],  ['ฒ','👴','ผู้เฒ่า'], ['ณ','🙏','เณร'],   ['ด','👶','เด็ก'],
+  ['ต','🐢','เต่า'],   ['ถ','👜','ถุง'],    ['ท','💂','ทหาร'],  ['ธ','🚩','ธง'],
+  ['น','🐭','หนู'],   ['บ','🍃','ใบไม้'],  ['ป','🐟','ปลา'],   ['ผ','🐝','ผึ้ง'],
+  ['ฝ','🥫','ฝา'],    ['พ','🏆','พาน'],    ['ฟ','🦷','ฟัน'],   ['ภ','⛵','สำเภา'],
+  ['ม','🐴','ม้า'],   ['ย','👹','ยักษ์'],   ['ร','🚤','เรือ'],  ['ล','🐒','ลิง'],
+  ['ว','💍','แหวน'],  ['ศ','🏯','ศาลา'],   ['ษ','🧙','ฤๅษี'],  ['ส','🐅','เสือ'],
+  ['ห','🧰','หีบ'],   ['ฬ','🪁','จุฬา'],   ['อ','🛁','อ่าง'],  ['ฮ','🦉','นกฮูก'],
+];
+GLYPHS.thai = THAI.map(([ch,p,th]) => ({ ch, p, th, en:th, strokes:null }));
+
+const FONT_TH = '800 110px "Baloo Thai 2", sans-serif';
+const PATH_CACHE_KEY = 'writer.thaiPaths2';
+
+/* วาดตัวอักษรลงผ้าใบเล็กๆ -> ทำให้เหลือเส้นหนา 1 พิกเซล (Zhang-Suen) -> ไล่เก็บเป็นเส้นลาก */
+const thaiPath = (function(){
+  const W = 120, H = 168, PAD = 6, idx = (x,y) => y*W + x;
+  const N8 = [[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+  const dd = (a,b) => Math.hypot(a[0]-b[0], a[1]-b[1]);
+  const plen = p => { let l = 0; for(let i=1;i<p.length;i++) l += dd(p[i],p[i-1]); return l; };
+
+  function raster(ch){
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d', { willReadFrequently:true });
+    g.font = FONT_TH; g.textBaseline = 'alphabetic'; g.textAlign = 'left';
+    const m = g.measureText(ch);
+    const bw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
+    const bh = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+    if(!(bw > 0 && bh > 0)) return null;
+    const s = Math.min((W-PAD*2)/bw, (H-PAD*2)/bh);
+    g.save(); g.translate(W/2, H/2); g.scale(s, s);
+    g.translate(-(m.actualBoundingBoxRight - bw/2), (bh/2 - m.actualBoundingBoxDescent));
+    g.fillStyle = '#fff'; g.fillText(ch, 0, 0); g.restore();
+    const d = g.getImageData(0,0,W,H).data, bin = new Uint8Array(W*H);
+    for(let i=0;i<W*H;i++) bin[i] = d[i*4+3] > 110 ? 1 : 0;
+    return bin;
+  }
+  function thin(g){
+    const P = (x,y) => (x<0||y<0||x>=W||y>=H) ? 0 : g[idx(x,y)];
+    let changed = true, guard = 0;
+    while(changed && guard++ < 60){
+      changed = false;
+      for(const step of [0,1]){
+        const del = [];
+        for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++){
+          if(!P(x,y)) continue;
+          const p2=P(x,y-1),p3=P(x+1,y-1),p4=P(x+1,y),p5=P(x+1,y+1),
+                p6=P(x,y+1),p7=P(x-1,y+1),p8=P(x-1,y),p9=P(x-1,y-1);
+          const B = p2+p3+p4+p5+p6+p7+p8+p9;
+          if(B < 2 || B > 6) continue;
+          const q = [p2,p3,p4,p5,p6,p7,p8,p9,p2];
+          let A = 0; for(let i=0;i<8;i++) if(q[i]===0 && q[i+1]===1) A++;
+          if(A !== 1) continue;
+          if(step === 0){ if(p2*p4*p6 || p4*p6*p8) continue; }
+          else { if(p2*p4*p8 || p2*p6*p8) continue; }
+          del.push(idx(x,y));
+        }
+        if(del.length){ changed = true; for(const i of del) g[i] = 0; }
+      }
+    }
+    return g;
+  }
+  /* ที่ทางแยกให้ "เดินตรงต่อ" ตามทิศเดิม ไม่เลี้ยวมั่ว — เส้นจะต่อกันยาวเหมือนลายมือจริง */
+  function trace(g){
+    const at = (x,y) => (x<0||y<0||x>=W||y>=H) ? 0 : g[idx(x,y)];
+    const deg = (x,y) => N8.reduce((a,[dx,dy]) => a + at(x+dx,y+dy), 0);
+    const used = new Uint8Array(W*H), out = [];
+    const walk = (sx,sy) => {
+      const pts = [[sx,sy]]; used[idx(sx,sy)] = 1;
+      let cx = sx, cy = sy, hx = 0, hy = 0;
+      for(;;){
+        let best = null, bs = -9;
+        for(const [dx,dy] of N8){
+          const x = cx+dx, y = cy+dy;
+          if(!at(x,y) || used[idx(x,y)]) continue;
+          const L = Math.hypot(dx,dy);
+          const sc = (hx||hy) ? (dx*hx + dy*hy)/L : (L === 1 ? .1 : 0);
+          if(sc > bs){ bs = sc; best = [x,y]; }
+        }
+        if(!best) break;
+        hx = best[0]-cx; hy = best[1]-cy;
+        const L = Math.hypot(hx,hy) || 1; hx /= L; hy /= L;
+        used[idx(best[0],best[1])] = 1; pts.push(best); cx = best[0]; cy = best[1];
+      }
+      return pts;
+    };
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++)
+      if(at(x,y) && !used[idx(x,y)] && deg(x,y) === 1) out.push(walk(x,y));
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++)
+      if(at(x,y) && !used[idx(x,y)]) out.push(walk(x,y));
+    return out;
+  }
+  function join(ps, tol){
+    let merged = true;
+    while(merged){
+      merged = false;
+      outer:
+      for(let i=0;i<ps.length;i++) for(let j=0;j<ps.length;j++){
+        if(i === j) continue;
+        const a = ps[i], b = ps[j], as = a[0], ae = a[a.length-1], bs = b[0], be = b[b.length-1];
+        if(dd(ae,bs) <= tol){ ps[i] = a.concat(b); ps.splice(j,1); merged = true; break outer; }
+        if(dd(ae,be) <= tol){ ps[i] = a.concat(b.slice().reverse()); ps.splice(j,1); merged = true; break outer; }
+        if(dd(as,be) <= tol){ ps[i] = b.concat(a); ps.splice(j,1); merged = true; break outer; }
+        if(dd(as,bs) <= tol){ ps[i] = b.slice().reverse().concat(a); ps.splice(j,1); merged = true; break outer; }
+      }
+    }
+    return ps;
+  }
+  function rdp(pts, eps){
+    if(pts.length < 3) return pts;
+    let mx = 0, mi = 0;
+    const [ax,ay] = pts[0], [bx,by] = pts[pts.length-1];
+    const L = Math.hypot(bx-ax, by-ay) || 1;
+    for(let i=1;i<pts.length-1;i++){
+      const d = Math.abs((bx-ax)*(ay-pts[i][1]) - (ax-pts[i][0])*(by-ay)) / L;
+      if(d > mx){ mx = d; mi = i; }
+    }
+    if(mx <= eps) return [pts[0], pts[pts.length-1]];
+    return rdp(pts.slice(0,mi+1), eps).slice(0,-1).concat(rdp(pts.slice(mi), eps));
+  }
+
+  return function(ch){
+    const bin = raster(ch);
+    if(!bin) return null;
+    let ps = trace(thin(bin)).filter(p => plen(p) >= 4);
+    ps = join(ps, 5).filter(p => plen(p) >= 11);       // ตัดหนวดสั้นที่ทางแยกทิ้ง
+    if(!ps.length) return null;
+    ps = ps.map(p => (p[0][0] > p[p.length-1][0] + 2 ? p.slice().reverse() : p));
+    ps.sort((a,b) => a[0][0] - b[0][0]);               // ไทยเขียนซ้าย -> ขวา
+    return ps.map(p => rdp(p, 1.2).map(([x,y]) => [Math.round(x*100/W), Math.round(y*140/H)]));
+  };
+})();
+
+let thaiCache = LS.get(PATH_CACHE_KEY, {});
+function thaiStrokes(ch){
+  if(thaiCache[ch]) return thaiCache[ch];
+  const p = thaiPath(ch);
+  if(!p) return null;
+  thaiCache[ch] = p;
+  LS.set(PATH_CACHE_KEY, thaiCache);
+  return p;
+}
 
 /* ---------- state ---------- */
 const S = {
@@ -680,6 +831,11 @@ function resample(pts, gap){
 
 function loadGlyph(){
   const g = glyph();
+  if(!g.strokes){                                  // ตัวไทย: ดึงเส้นจากฟอนต์ครั้งแรกที่เปิดตัวนั้น
+    const p = thaiStrokes(g.ch);
+    if(!p){ toast('ตัวนี้เตรียมไม่ได้ ลองตัวอื่นก่อนนะ'); return; }
+    g.strokes = p;
+  }
   S.si = 0; S.di = 0; S.finished = false;
   S.trail = []; S.penPrev = null; S.lastHitAt = performance.now(); S.hinted = false;
   S.strokes = g.strokes.map(pts => {
@@ -691,9 +847,8 @@ function loadGlyph(){
     });
     return { fine, dots };
   });
-  const isNum = S.set === 'num';
   $('#pEm').textContent = g.p;
-  $('#pTxt').textContent = isNum ? g.ch + ' · ' + g.th : g.ch + ' · ' + g.en;
+  $('#pTxt').textContent = g.ch + ' · ' + (S.set === 'abc' ? g.en : g.th);
   $('#cele').classList.remove('on');
   paintGRow();
 }
@@ -881,18 +1036,22 @@ function confetti(){
   }
 }
 function celebrate(){
-  const g = glyph(), isNum = S.set === 'num';
+  const g = glyph(), isNum = S.set === 'num', isTH = S.set === 'thai';
   $('#cGlyph').textContent = g.ch;
   const n = isNum ? g.count : 1;
   $('#cEms').innerHTML = Array.from({length:n}, (_,i) =>
     `<span style="animation-delay:${(.25 + i*.2).toFixed(2)}s">${g.p}</span>`).join('');
   $('#cWord').innerHTML = isNum
     ? `${g.th}<small>${g.ch} = ${g.th} (${g.en})</small>`
+    : isTH
+    ? `${g.ch} ${g.th}<small>ตัว ${g.ch}</small>`
     : `${g.en.toUpperCase()}<small>${g.th}</small>`;
   $('#cele').classList.add('on');
   if(isNum){
     for(let i = 0; i < n; i++) tone(659.25 + i*70, .3 + i*.2, .18, 'triangle', .15);
     setTimeout(() => speak(g.th + '. นับได้ ' + g.th + ' ตัว', 'th'), 500 + n*200);
+  }else if(isTH){
+    setTimeout(() => speak(`${g.ch} ${g.th}`, 'th'), 350);
   }else{
     setTimeout(() => speak(g.ch + '. ' + g.en + '.', 'en'), 350);
     setTimeout(() => speak(g.th, 'th'), 2300);
@@ -968,6 +1127,8 @@ async function start(){
   fpsN = 0; fpsAt = 0; detMs = 0;
   $('#diagTag').classList.remove('on');
   resize();
+  /* ตัวไทยดึงเส้นจากฟอนต์ — ต้องรอฟอนต์โหลดจริงก่อน ไม่งั้นได้รูปจากฟอนต์สำรองที่หน้าตาไม่เหมือน */
+  if(S.set === 'thai'){ try{ await document.fonts.load(FONT_TH); }catch{} }
   loadGlyph();
   cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
 
@@ -1048,7 +1209,6 @@ function paintChips(){
 
 $('#setChips').addEventListener('click', e => {
   const c = e.target.closest('.chip'); if(!c) return;
-  if(c.id === 'thaiChip'){ toast('ก-ฮ กำลังตามมาเร็วๆ นี้'); return; }
   S.set = c.dataset.s; LS.set('writer.set', S.set); paintChips(); tone(700,0,.06,'square',.06);
 });
 $('#playChips').addEventListener('click', e => {
@@ -1073,7 +1233,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 /* ---------- boot ---------- */
-if(!['abc','num'].includes(S.set)) S.set = 'abc';
+if(!['abc','num','thai'].includes(S.set)) S.set = 'abc';
 if(!['air','touch'].includes(S.play)) S.play = 'touch';
 if(typeof S.done !== 'object' || !S.done) S.done = {};
 paintChips();
