@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="jaokun.webmanifest">
 <link rel="apple-touch-icon" href="jaokun-icon-180.png">
-<title>เจ้าคุณ v1.8 — เกมของเจ้าคุณ</title>
+<title>เจ้าคุณ v1.9 — เกมของเจ้าคุณ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Thai+2:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -319,7 +319,7 @@ input{font:inherit}
   </a>
 
   <p class="note">ทุกเกมโบกมือเล่นผ่านกล้องได้ หรือแตะจอก็ได้</p>
-  <p class="ver">เจ้าคุณ v1.8</p>
+  <p class="ver">เจ้าคุณ v1.9</p>
 
  </div></div>
 </section>
@@ -392,6 +392,15 @@ input{font:inherit}
     </div>
   </div>
 
+  <div class="card">
+    <p class="lbl">ค้างมือนานแค่ไหนถึงเลือก <b id="dwLbl">2 วิ</b></p>
+    <div class="chips four" id="dwChips">
+      <button class="chip dw" data-d="900"  aria-pressed="false" title="ค้าง 0.9 วิ">ไว</button>
+      <button class="chip dw" data-d="1400" aria-pressed="false" title="ค้าง 1.4 วิ">กลาง</button>
+      <button class="chip dw" data-d="2000" aria-pressed="true"  title="ค้าง 2 วิ">ช้า</button>
+    </div>
+  </div>
+
   <div id="secWarn" class="warn" hidden></div>
 
   <div style="margin-top:14px">
@@ -404,7 +413,7 @@ input{font:inherit}
   </div>
 
   <p class="note">ยืนห่างจอประมาณหนึ่งช่วงแขน แล้วยกมือขึ้นให้กล้องเห็น</p>
-  <p class="ver">เกมคิดเลข v1.8 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
+  <p class="ver">เกมคิดเลข v1.9 · <button id="btnCfg">ตั้งค่าที่เก็บคะแนน</button></p>
 
  </div></div>
 </section>
@@ -503,18 +512,22 @@ input{font:inherit}
    เจ้าคุณ v1.7 — เกมคิดเลขจับมือด้วยกล้อง
    ═══════════════════════════════════════════════ */
 
-const VERSION = 'v1.8';
+const VERSION = 'v1.9';
 
 /* URL ของ Apps Script (/exec) — เปลี่ยนได้ที่ปุ่ม "ตั้งค่าที่เก็บคะแนน" ในแอป */
 const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzx7tZYRunES9Gfi0zOIb0Amz-kzp_LMdFhQzgJetRychRwso_vFuleXi0nbPdGjT5r/exec';
 
 const CFG = {
   ROUND: 10,          // จำนวนข้อต่อรอบ
-  DWELL_MS: 520,      // ค้างมือกี่ ms ถึงเลือก
+  DWELL_MS: 2000,     // ค้างมือกี่ ms ถึงเลือก (เปลี่ยนได้ที่ชิป "ค้างมือนานแค่ไหน")
   SLASH_SPEED: 700,   // px/วินาที — เร็วกว่านี้ = ฟันตัดผ่าน เลือกทันที
   SMOOTH: .9,         // ยิ่งใกล้ 1 ยิ่งตามมือไว (แต่สั่นขึ้น)
   BASE_PT: 10,
   MULT: { '1':1, '2':2, '3':3, '4':4 },
+  KEEP_PAD: 44,       // เข้าวงแล้วออกยากขึ้น — มือสั่นนิดหน่อยวงแหวนต้องไม่รีเซ็ต
+  ARM_MOVE: 60,       // ขยับมือเกินนี้หลังเริ่มข้อ = ตั้งใจเลือกแล้ว ปลดล็อกลูกทุกลูก
+  HAND_FRESH: 400,    // เห็นมือล่าสุดเกินนี้ = ห้ามนับว่ากำลังค้างมืออยู่ (กันเงาค้างเลือกเอง)
+  HAND_STREAK: 2,     // ต้องเจอมือติดกันกี่เฟรมถึงเชื่อ (กันจับปาก/หน้าแวบเดียว)
 };
 
 const OPS = {
@@ -546,6 +559,7 @@ const S = {
   level: String(LS.get('level','1')),
   count: LS.get('count',3),
   play: LS.get('play','hold'),          // hold = ลากมือค้าง · slash = หั่นมือ · tap = แตะจอ
+  dwell: LS.get('dwell', CFG.DWELL_MS),
   useVox: LS.get('useVox',true),
   gas: LS.get('gas', GAS_URL_DEFAULT),
 
@@ -555,8 +569,9 @@ const S = {
   used:new Set(), round:new Set(),
   startAt:0, qAt:0, pauseAt:0, grace:0, times:[], running:false, locked:true,
   ptr:null, pprev:null, pv:0, slash:null, praise:null, lastHand:0, handSeen:false,
-  camOn:false, camFail:false,
+  camOn:false, camFail:false, armFrom:null, lastNorm:null, goodStreak:0,
 };
+const dwellMs = () => S.dwell || CFG.DWELL_MS;
 
 const useCam = () => S.play !== 'tap';
 const PLAY_TH = { hold:'ลากมือ', slash:'หั่นมือ', tap:'แตะจอ' };
@@ -796,8 +811,10 @@ function stopCam(){
 }
 const MP_V     = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
 const MP_MODEL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
-const MP_OPT   = `{ runningMode:'VIDEO', numHands:1,
-  minHandDetectionConfidence:.3, minHandPresenceConfidence:.3, minTrackingConfidence:.25 }`;
+/* ⚠️ confidence ต่ำเกินไป (เคยตั้ง .3/.3/.25) โมเดลจะจับ "ปาก/หน้า" เป็นมือ — เจอจริง 2026-08-13
+   ตั้งสูงขึ้น + ขอมา 2 มือแล้วค่อยคัดเองว่าอันไหนหน้าตาเหมือนมือจริง (ดู handOK/bestHand) */
+const MP_OPT   = `{ runningMode:'VIDEO', numHands:2,
+  minHandDetectionConfidence:.55, minHandPresenceConfidence:.5, minTrackingConfidence:.4 }`;
 
 /* ตัวจับมือรันใน Web Worker — เธรดหลักจะได้เอาไปวาดจออย่างเดียว ไม่ต้องแย่งกัน
    ผลคือ fps ไม่ตกตอนตรวจมือ และรอยมือลื่นขึ้นชัดเจน
@@ -831,7 +848,7 @@ self.onmessage = async (e) => {
     if(hl){
       const ts = m.ts > tsLast ? m.ts : tsLast + 1; tsLast = ts;
       const t0 = performance.now();
-      try{ const r = hl.detectForVideo(m.bitmap, ts); out = (r && r.landmarks && r.landmarks[0]) || null; }catch(err){}
+      try{ const r = hl.detectForVideo(m.bitmap, ts); out = (r && r.landmarks) || null; }catch(err){}
       ms = performance.now() - t0;
     }
     try{ m.bitmap.close(); }catch(err){}
@@ -903,9 +920,48 @@ function onWorkerMsg(ev){
   const m = ev.data;
   if(!m || m.type !== 'result') return;
   detMs = detMs ? detMs*.8 + m.ms*.2 : m.ms;
-  const now = performance.now();
-  if(!m.lm){ if(now - S.lastHand > 900) S.ptr = null; return; }
-  applyLandmarks(m.lm, now);
+  takeHands(m.lm, performance.now());
+}
+
+/* ═══════════ คัดว่าอันไหนคือ "มือจริง" ═══════════
+   โมเดลชอบจับปาก/ใบหน้าเป็นมือเวลาแสงไม่ดี — เช็คสัดส่วนก่อนว่าเป็นมือได้จริงไหม
+   แล้วถ้ามีหลายอัน เลือกอันที่ใกล้ตำแหน่งมือเฟรมก่อนที่สุด (มือจริงไม่กระโดดข้ามจอ) */
+function handOK(lm){
+  if(!lm || lm.length < 21) return false;
+  const d = (a,b) => Math.hypot(lm[a].x-lm[b].x, lm[a].y-lm[b].y);
+  const palmW = d(5,17), palmL = d(0,9);
+  if(palmW < 1e-4 || palmL < 1e-4) return false;
+  const ratio = palmL/palmW;
+  if(ratio < .55 || ratio > 2.8) return false;              // ฝ่ามือจริงไม่แบนหรือยาวเกินนี้
+  const mid = d(9,12);
+  if(mid < palmL*.30 || mid > palmL*2.4) return false;      // นิ้วกลางเทียบฝ่ามือ
+  if(Math.max(palmL, mid) < .04) return false;              // เล็กเกินไป = ไม่ใช่มือ (หรือไกลจนเล่นไม่ได้)
+  return true;
+}
+function bestHand(list){
+  let best = null, bs = -1;
+  for(const lm of list){
+    if(!handOK(lm)) continue;
+    const cx = (lm[0].x + lm[9].x)/2, cy = (lm[0].y + lm[9].y)/2;
+    let sc = 1;
+    if(S.lastNorm) sc += 1.6 / (1 + Math.hypot(cx - S.lastNorm.x, cy - S.lastNorm.y)*5);
+    if(lm[8].y < lm[0].y) sc += .3;                          // ปลายนิ้วชี้อยู่เหนือข้อมือ = ท่ายกมือเล่น
+    if(sc > bs){ bs = sc; best = { lm, cx, cy }; }
+  }
+  return best;
+}
+function takeHands(list, now){
+  const pick = Array.isArray(list) ? bestHand(list) : null;
+  if(!pick){
+    S.goodStreak = 0;
+    if(now - S.lastHand > 900){ S.ptr = null; S.lastNorm = null; }
+    return;
+  }
+  /* เจอแวบเดียวไม่เชื่อ ต้องเจอติดกันก่อน — ตัวจับผิด (ปาก/หน้า) มักโผล่เฟรมเดียวแล้วหาย */
+  S.goodStreak++;
+  S.lastNorm = { x:pick.cx, y:pick.cy };
+  if(S.goodStreak < CFG.HAND_STREAK && !S.ptr) return;
+  applyLandmarks(pick.lm, now);
 }
 
 /* วิดีโอเต็มจอแบบ cover + กระจกซ้ายขวา */
@@ -971,10 +1027,7 @@ function detectHand(now){
   const t0 = performance.now();
   try{ res = landmarker.detectForVideo(video, now); }catch{ return; }
   detMs = detMs ? detMs*.8 + (performance.now()-t0)*.2 : performance.now()-t0;
-
-  const lm = res && res.landmarks && res.landmarks[0];
-  if(!lm){ if(now - S.lastHand > 900) S.ptr = null; return; }
-  applyLandmarks(lm, now);
+  takeHands(res && res.landmarks, now);
 }
 
 /* แปลง landmark เป็นตำแหน่งมือบนจอ — ใช้ร่วมกันทั้งทาง worker และเธรดหลัก */
@@ -1037,7 +1090,7 @@ function layout(n){
       vx: (Math.random()<.5?-1:1) * ri(Math.round(sp*.6), sp),
       vy: (Math.random()<.5?-1:1) * ri(Math.round(sp*.5), Math.round(sp*.9)),
       r, val:0, grad:PALETTE[i%PALETTE.length],
-      dwell:0, state:null, stateAt:0, armed:false, born:performance.now(),
+      dwell:0, tick:0, state:null, stateAt:0, armed:false, born:performance.now(),
     };
   });
 }
@@ -1098,12 +1151,19 @@ function drawBubble(b, now){
   ctx.strokeStyle = 'rgba(255,255,255,.9)';
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.stroke();
 
+  /* วงแหวนกำลังโหลด — ต้องเห็นชัดว่า "กำลังจะเลือกอันนี้นะ" ยังถอนมือทัน */
   if(b.dwell > 0 && !b.state){
-    const p = clamp(b.dwell/CFG.DWELL_MS, 0, 1);
+    const p = clamp(b.dwell/dwellMs(), 0, 1);
+    const rr = r + Math.max(11, r*.2);
+    ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI*2);
+    ctx.lineWidth = Math.max(9, r*.2); ctx.strokeStyle = 'rgba(0,0,0,.32)'; ctx.stroke();
     ctx.beginPath();
-    ctx.arc(x, y, r + Math.max(8, r*.16), -Math.PI/2, -Math.PI/2 + Math.PI*2*p);
-    ctx.lineWidth = Math.max(6, r*.15); ctx.lineCap = 'round';
-    ctx.strokeStyle = '#FFC53D'; ctx.stroke();
+    ctx.arc(x, y, rr, -Math.PI/2, -Math.PI/2 + Math.PI*2*p);
+    ctx.lineWidth = Math.max(9, r*.2); ctx.lineCap = 'round';
+    ctx.strokeStyle = p > .8 ? '#6EE7A8' : '#FFC53D';
+    ctx.shadowColor = 'rgba(255,197,61,.7)'; ctx.shadowBlur = 14;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
   }
 
   const s = String(b.val);
@@ -1263,15 +1323,19 @@ function checkHit(dtms){
 
   /* ช่วงพักสั้นๆ หลังเปลี่ยนข้อ — มือที่ยังค้างจากข้อก่อนต้องไม่กลายเป็นคำตอบข้อใหม่ */
   if(now < S.grace){
-    S.trail.length = 0;
-    for(const b of S.bubbles) b.dwell = 0;
+    S.trail.length = 0; S.armFrom = null;
+    for(const b of S.bubbles){ b.dwell = 0; b.tick = 0; }
     return;
   }
-  /* ลูกที่มือทับอยู่ตั้งแต่ข้อเริ่ม "ยังไม่ปลดล็อก" — ต้องเอามือออกก่อนหนึ่งครั้งถึงเลือกได้ */
+  /* ปลดล็อกลูก = มือเคยออกจากลูกนั้น "หรือ" ขยับมืออย่างตั้งใจหลังข้อเริ่ม
+     ❌ ห้ามใช้แค่ "ต้องเอามือออกจากลูก" อย่างเดียว — ลูกลอยมาทับมือที่วางนิ่งได้
+        แล้วลูกนั้นจะไม่มีวันปลดล็อก = เอามือไปโดนยังไงก็ไม่ติด (บั๊คจริง 2026-08-13) */
+  if(!S.armFrom) S.armFrom = { x:S.ptr.x, y:S.ptr.y };
+  const moved = Math.hypot(S.ptr.x - S.armFrom.x, S.ptr.y - S.armFrom.y) > CFG.ARM_MOVE;
   let armedNow = false;
   for(const b of S.bubbles){
     if(b.state || b.armed) continue;
-    if(Math.hypot(S.ptr.x-b.x, S.ptr.y-b.y) > b.r + 26){ b.armed = true; armedNow = true; }
+    if(moved || Math.hypot(S.ptr.x-b.x, S.ptr.y-b.y) > b.r + 26){ b.armed = true; armedNow = true; }
   }
   if(armedNow) S.trail.length = 0;   // ตัดรอยตอนถอนมือทิ้ง ไม่ให้นับเป็นการฟันลูกที่เพิ่งปลดล็อก
 
@@ -1299,15 +1363,22 @@ function checkHit(dtms){
       }
     }
 
-    /* วางมือค้าง = วงแหวนทองค่อยๆ เต็ม */
+    /* วางมือค้าง = วงแหวนทองค่อยๆ เต็ม
+       - เข้าวงง่าย (r+14) แต่ออกยาก (r+44) — มือสั่นนิดหน่อยวงแหวนต้องไม่รีเซ็ตทิ้ง
+       - นับเฉพาะตอนที่ "เพิ่งเห็นมือจริงๆ" ไม่งั้นตอนกล้องหลุด เคอร์เซอร์ค้างอยู่บนลูกแล้วเลือกเอง */
     if(canHold){
       const d = Math.hypot(S.ptr.x-b.x, S.ptr.y-b.y);
-      if(d < b.r + 14){
+      const inR = b.dwell > 0 ? b.r + CFG.KEEP_PAD : b.r + 14;
+      const fresh = (now - S.lastHand) < CFG.HAND_FRESH || !useCam();
+      if(d < inR && fresh){
         if(b.dwell === 0) sndTick();
         b.dwell += dtms;
-        if(b.dwell >= CFG.DWELL_MS){ pick(b); return; }
+        const step = Math.floor(b.dwell / (dwellMs()/4));      // เสียงไล่ระดับ บอกว่าใกล้เต็มแล้ว
+        if(step > b.tick){ b.tick = step; tone(620 + step*130, 0, .07, 'square', .07); }
+        if(b.dwell >= dwellMs()){ pick(b); return; }
       }else{
-        b.dwell = Math.max(0, b.dwell - dtms*2);
+        b.dwell = Math.max(0, b.dwell - dtms*.9);
+        if(b.dwell === 0) b.tick = 0;
       }
     }
   }
@@ -1372,7 +1443,7 @@ function advance(){
   S.locked = false;
   S.qAt = Date.now();
   S.grace = performance.now() + 700;
-  S.trail.length = 0; S.pv = 0;
+  S.trail.length = 0; S.pv = 0; S.armFrom = null;
   sayQ();
 }
 
@@ -1464,6 +1535,7 @@ async function start(){
   S.score = 0; S.idx = 0; S.ok = 0; S.no = 0; S.combo = 0; S.maxCombo = 0;
   S.bubbles = []; S.parts = []; S.trail = []; S.times = []; S.qAt = 0; S.pauseAt = 0;
   S.ptr = null; S.pprev = null; S.pv = 0; S.slash = null; S.praise = null; S.round.clear();
+  S.armFrom = null; S.lastNorm = null; S.goodStreak = 0;
   S.handSeen = false; S.camFail = false; S.locked = true; S.running = false;
   fpsN = 0; fpsAt = 0; fpsVal = 0; detMs = 0;
   $('#diagTag').classList.remove('on');
@@ -1503,7 +1575,7 @@ async function start(){
   S.startAt = Date.now(); S.qAt = Date.now();
   S.running = true; S.locked = false;
   S.grace = performance.now() + 700;
-  S.trail.length = 0; S.pv = 0;
+  S.trail.length = 0; S.pv = 0; S.armFrom = null;
   hint(HINT_BY_MODE(), 3600);
   sayQ();
 }
@@ -1737,6 +1809,9 @@ function paintChips(){
       : 'ไม่ใช้กล้อง แตะตัวเลขบนจอ';
   });
 
+  $$('#dwChips .dw').forEach(c => c.setAttribute('aria-pressed', +c.dataset.d === S.dwell));
+  $('#dwLbl').textContent = (Math.round(dwellMs()/100)/10) + ' วิ';
+
   const vc = $('#voxChip');
   vc.setAttribute('aria-pressed', S.useVox);
   vc.textContent = S.useVox ? (voTH ? 'มีเสียงอ่าน' : 'เสียงอ่าน (ออนไลน์)') : 'ปิดเสียง';
@@ -1765,6 +1840,10 @@ $('#playChips').addEventListener('click', e => {
   const c = e.target.closest('.chip'); if(!c) return;
   if(c.dataset.p !== 'tap' && !window.isSecureContext){ toast('ต้องเปิดผ่าน localhost หรือ https กล้องถึงทำงาน'); return; }
   S.play = c.dataset.p; LS.set('play', S.play); paintChips(); tone(820,0,.06,'square',.06);
+});
+$('#dwChips').addEventListener('click', e => {
+  const c = e.target.closest('.chip'); if(!c) return;
+  S.dwell = +c.dataset.d; LS.set('dwell', S.dwell); paintChips(); tone(760,0,.06,'square',.06);
 });
 $('#voxChip').addEventListener('click', () => {
   pickVoice();                                 // เผื่อเพิ่งลงเสียงไทยเพิ่ม
@@ -1873,11 +1952,15 @@ const LV_OLD = { easy:'1', mid:'3', hard:'4' };
 if(LV_OLD[S.level]) S.level = LV_OLD[S.level];
 if(!['1','2','3','4'].includes(S.level)) S.level = '1';
 LS.set('level', S.level);
+if(![900,1400,2000].includes(S.dwell)) S.dwell = CFG.DWELL_MS;
 
 $('#pname').value = S.name;
 paintChips();
 /* เปิดไฟล์ตรงๆ (file://) เบราว์เซอร์จะไม่ให้แตะกล้องเลย — ต้องบอกให้ชัดว่าทำไม
    ไม่งั้นจะงงว่า "ทำไมกดลากมือ/หั่นมือไม่ได้ ได้แต่แตะจอ" */
+/* debug handle — ไว้ทดสอบอัตโนมัติ ไม่กระทบเกม */
+window.JK = { S, CFG, start, quit, pick, checkHit, handOK, bestHand, takeHands, show, dwellMs };
+
 if(!window.isSecureContext || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){
   const w = $('#secWarn'); w.hidden = false;
   w.innerHTML = '<b>โหมดลากมือ / หั่นมือ ใช้ไม่ได้ตอนนี้</b><br>' +
