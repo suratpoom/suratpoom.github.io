@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F3B36">
-<title>จัดยาโดยพญาบี v1.0</title>
+<title>จัดยาโดยพญาบี v1.2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -284,7 +284,11 @@ textarea.inp{min-height:64px;resize:vertical;font-size:var(--fs-base)}
 .pick{border:1px solid var(--line-input);background:var(--card);color:var(--text);border-radius:var(--r-md);
   padding:10px var(--sp-4);font-size:var(--fs-base);cursor:pointer;white-space:nowrap}
 .pick.on{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:600}
-.pick.seg{flex:1;text-align:center;padding:var(--sp-3) 0}
+.pick.seg{flex:1;min-width:0;text-align:center;padding:var(--sp-3) 0;overflow:hidden;text-overflow:ellipsis}
+.pick.seg3{font-size:var(--fs-cap);padding:11px 2px}
+.danger-zone{margin-top:var(--sp-5);border-top:1px solid var(--line);padding-top:var(--sp-4)}
+.btn-danger{width:100%;height:48px;border-radius:var(--r-md);background:var(--card);
+  border:1px solid #F1C4C4;color:var(--req);font-size:var(--fs-md);font-weight:600}
 .pav{width:46px;height:46px;border-radius:50%;border:1px solid var(--line-input);background:var(--card);
   display:flex;align-items:center;justify-content:center;font-weight:600;cursor:pointer;flex:none;overflow:hidden;padding:0}
 .pav.on{background:var(--teal);border-color:var(--teal);color:#fff}
@@ -335,6 +339,40 @@ textarea.inp{min-height:64px;resize:vertical;font-size:var(--fs-base)}
 .sync.off .dot{background:var(--amber)}
 .sync.err .dot{background:var(--req)}
 
+.gate{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px}
+.gate-card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-2xl);overflow:hidden;box-shadow:var(--shadow-card)}
+.gate-hero{height:168px;position:relative;background:var(--sidebar)}
+.gate-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.gate-hero .scrim{position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(15,59,54,.55) 0%,rgba(15,59,54,.92) 100%)}
+.gate-hero .inner{position:absolute;left:0;right:0;bottom:0;padding:18px 22px;color:#fff}
+.gate-hero .inner .lg{font-size:20px;font-weight:700}
+.gate-hero .inner .sm{font-size:var(--fs-cap);color:#CFE6E2;margin-top:2px}
+.gate-body{padding:22px}
+.gate-body p{margin:0;font-size:var(--fs-base);color:var(--text-2);line-height:1.6}
+.gate-btn{margin-top:18px;display:flex;justify-content:center;min-height:44px}
+.gate-field{margin-top:var(--sp-2);position:relative}
+.gate-field .inp{height:52px}
+.gate-field .eye{position:absolute;right:6px;top:6px;height:40px;padding:0 12px;border:0;background:transparent;
+  color:var(--teal);font-size:var(--fs-cap);font-weight:600;cursor:pointer;border-radius:var(--r-sm)}
+.gate-lbl{margin-top:var(--sp-4);font-size:var(--fs-base);font-weight:600}
+.gate-msg{margin-top:14px;background:var(--amber-bg);border:1px solid var(--amber-line);
+  border-radius:var(--r-md);padding:12px 14px;font-size:13.5px;color:var(--amber-deep);line-height:1.55;word-break:break-word}
+.gate-foot{margin-top:16px;text-align:center;font-size:var(--fs-sm);color:var(--text-3)}
+
+.acct{display:flex;align-items:center;gap:var(--sp-2);min-width:0}
+.acct .bd{min-width:0}
+.acct .n{font-size:var(--fs-cap);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acct .e{font-size:11.5px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side-acct{margin-top:14px;padding:10px var(--sp-3);border-radius:var(--r-md);background:var(--sidebar-hover);
+  color:#fff;cursor:pointer;border:0;width:100%;text-align:left}
+.user-row{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:12px 14px;display:flex;align-items:center;gap:var(--sp-3)}
+.user-row .bd{flex:1;min-width:0}
+.role-chip{font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:20px;flex:none;
+  background:var(--teal-soft);color:var(--teal)}
+
 @media print{
   .sidebar,.tabbar,.no-print{display:none!important}
   body{background:#fff}
@@ -356,10 +394,12 @@ textarea.inp{min-height:64px;resize:vertical;font-size:var(--fs-base)}
    หลังบ้าน: Google Apps Script → Google Sheet + Google Drive (รูปฉลากยา)
    ══════════════════════════════════════════════════════════════ */
 
-var VERSION  = 'v1.0';
-var API_URL  = 'https://script.google.com/macros/s/AKfycbyl8eAAYuyNHX1T7SNIIPMHbLoFnF7oNlrcQpxJ0Q7ArbMeOLPw_4ShuX5_h1O1b8D7LA/exec';
+var VERSION  = 'v1.2';
+var API_URL  = 'https://script.google.com/macros/s/AKfycbze89lJ0Kd7Wk0a8Hz2jNE2RGJcqOOE6ODVFDen_Va45AJqkVOI_RH2s0oH8rRwnUXV/exec';
 var CACHE_KEY = 'bmed-cache-v1';
 var QUEUE_KEY = 'bmed-queue-v1';
+var AUTH_KEY  = 'bmed-auth-v1';
+var USER_KEY  = 'bmed-lastuser';
 
 var IMG = {
   hero : 'https://images.unsplash.com/photo-1563213126-a4273aed2016?auto=format&fit=crop&w=1400&q=70',
@@ -378,12 +418,32 @@ var S = {
   people:[], meds:[], taken:{}, takenDate:'',
   mealTab:'', sync:'loading', lastError:'',
   dd:false, ddHi:-1,
-  form:null, saving:false, modal:null, desktop:window.innerWidth>=900
+  form:null, saving:false, modal:null, desktop:window.innerWidth>=900,
+  sid:'', user:null, gateMsg:'', gateBusy:false, gateUser:'', gateShowPw:false,
+  users:null, sheetUrl:''
 };
 
+var FREQS=[{v:'daily',label:'ทุกวัน'},{v:'weekly',label:'รายสัปดาห์'},{v:'asneeded',label:'เมื่อมีอาการ'}];
+
 function blankForm(){
-  return { name:'', newName:false, person:'', meals:['เช้า'], dose:1, qty:'30',
-           start:todayIso(), lead:7, note:'', photo:'', photoName:'', dirty:false };
+  return { editId:'', name:'', newName:false, person:'', meals:['เช้า'], dose:1, freq:'daily',
+           qty:'30', start:todayIso(), lead:7, note:'', photo:'', photoName:'', dirty:false };
+}
+
+/* เปิดฟอร์มในโหมดแก้ไข — เติมค่าจากยาที่เลือก */
+function editForm(m){
+  return { editId:m.id, name:m.name||'', newName:true, person:m.person||'',
+           meals:sortMeals(m.meals||[]), dose:m.dose||1, freq:m.freq||'daily',
+           qty:String(m.remaining==null?0:m.remaining), start:m.start||todayIso(),
+           lead:m.lead||7, note:m.note||'', photo:'', photoName:'', dirty:false };
+}
+function openEditForm(id){
+  var m=findMed(id); if(!m) return;
+  S.navStack.push({view:S.view, selId:S.selId, selPerson:S.selPerson});
+  if(S.navStack.length>20) S.navStack.shift();
+  S.view='form'; S.dd=false; S.form=editForm(m);
+  render(true);
+  armHist();
 }
 
 /* ── date helpers (ใช้เวลาเครื่อง = Asia/Bangkok ไม่ใช่ UTC) ─── */
@@ -505,20 +565,48 @@ function loadCache(){
     return true;
   }catch(e){ return false; }
 }
+function loadAuth(){
+  try{
+    var a=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');
+    if(a && a.sid){ S.sid=a.sid; S.user=a.user||null; return true; }
+  }catch(e){}
+  return false;
+}
+function saveAuth(){
+  try{ localStorage.setItem(AUTH_KEY, JSON.stringify({sid:S.sid, user:S.user})); }catch(e){}
+}
+function clearAuth(){
+  S.sid=''; S.user=null; S.users=null;
+  S.people=[]; S.meds=[]; S.taken={};
+  try{ localStorage.removeItem(AUTH_KEY); localStorage.removeItem(CACHE_KEY); }catch(e){}
+}
+function forceLogout(msg){
+  var had=!!S.sid;
+  clearAuth();
+  S.view='home'; S.navStack=[]; S.form=null; S.gateShowPw=false;
+  try{ S.gateUser=localStorage.getItem(USER_KEY)||''; }catch(e){ S.gateUser=''; }
+  S.gateMsg=msg||(had?'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่':'');
+  render(true);
+}
+
 function getQueue(){ try{ return JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]'); }catch(e){ return []; } }
 function setQueue(q){ try{ localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }catch(e){} }
 function pushQueue(job){ var q=getQueue(); q.push(job); if(q.length>50) q.shift(); setQueue(q); }
 
 /* ── api ───────────────────────────────────────────────────── */
 function apiGet(action){
-  return fetch(API_URL+'?action='+encodeURIComponent(action)+'&t='+Date.now(),{method:'GET'})
-    .then(function(r){ return r.json(); });
+  var u=API_URL+'?action='+encodeURIComponent(action)+'&t='+Date.now();
+  if(S.sid) u+='&sid='+encodeURIComponent(S.sid);
+  return fetch(u,{method:'GET'}).then(function(r){ return r.json(); });
 }
 function apiPost(payload){
+  var body={};
+  for(var k in payload) body[k]=payload[k];
+  if(S.sid && !body.sid) body.sid=S.sid;
   return fetch(API_URL,{
     method:'POST',
     headers:{'Content-Type':'text/plain;charset=utf-8'},   /* text/plain = ไม่โดน CORS preflight ของ GAS */
-    body:JSON.stringify(payload)
+    body:JSON.stringify(body)
   }).then(function(r){ return r.json(); });
 }
 function setSync(kind,msg){ S.sync=kind; S.lastError=msg||''; paintSync(); }
@@ -538,11 +626,12 @@ function syncHtml(){
 function send(payload,opt){
   opt=opt||{};
   return apiPost(payload).then(function(res){
-    if(!res || !res.ok) throw new Error((res&&res.error)||'บันทึกไม่สำเร็จ');
-    setSync('ok');
-    if(opt.onOk) opt.onOk(res);
-    return res;
-  }).catch(function(err){
+    if(res && res.ok){ setSync('ok'); if(opt.onOk) opt.onOk(res); return res; }
+    if(res && res.code==='NOAUTH'){ forceLogout(); return res; }
+    setSync('ok');                                   /* ต่อหลังบ้านติด แค่ถูกปฏิเสธ */
+    if(!opt.quiet) toast((res && res.error) || 'บันทึกไม่สำเร็จ');
+    return res || {ok:false};
+  }).catch(function(err){                            /* ต่อเน็ตไม่ได้เท่านั้นถึงเข้าคิว */
     if(opt.noQueue){ throw err; }
     pushQueue(payload);
     setSync('queued');
@@ -556,6 +645,7 @@ function flushQueue(){
     var cur=getQueue();
     if(!cur.length) return Promise.resolve(sent>0);
     return apiPost(cur[0]).then(function(r){
+      if(r && r.code==='NOAUTH') return sent>0;      /* ยังไม่ได้ล็อกอิน → เก็บคิวไว้ส่งหลังล็อกอิน */
       cur.shift(); setQueue(cur);          /* ได้คำตอบแล้ว (สำเร็จหรือถูกปฏิเสธ) → ทิ้งงานนี้ ไม่ส่งซ้ำ */
       if(r && r.ok) sent++;
       return step();
@@ -564,8 +654,11 @@ function flushQueue(){
   return step();
 }
 function reload(){
+  if(!S.sid) return Promise.resolve(false);
   return apiGet('load').then(function(res){
+    if(res && res.code==='NOAUTH'){ forceLogout(); return false; }
     if(!res || !res.ok) throw new Error((res&&res.error)||'โหลดข้อมูลไม่สำเร็จ');
+    if(res.user){ S.user=res.user; saveAuth(); }
     S.people = res.people||[];
     S.meds   = res.meds||[];
     S.taken  = res.taken||{};
@@ -695,9 +788,82 @@ function fallbackCopy(text){
 }
 
 /* ══════════════════════════════════════════════════════════════
+   🔒 GATE — ยังไม่ล็อกอิน เห็นได้แค่หน้านี้
+   ══════════════════════════════════════════════════════════════ */
+function renderGate(){
+  var a=el('app');
+  a.className='';
+  var busy=S.gateBusy;
+  a.innerHTML='<div class="gate"><div class="gate-card">'+
+    '<div class="gate-hero">'+imgTag(IMG.hero,'กล่องจัดยาประจำวัน')+'<div class="scrim"></div>'+
+      '<div class="inner"><div class="lg">✚ จัดยาโดยพญาบี</div>'+
+      '<div class="sm">บันทึกการใช้ยาของคนในบ้าน</div></div></div>'+
+    '<div class="gate-body">'+
+      '<p>แอปนี้เปิดให้เฉพาะคนในครอบครัว<br>ใส่ชื่อผู้ใช้และรหัสผ่านที่เจ้าของแอปตั้งให้</p>'+
+      '<div class="gate-lbl">ชื่อผู้ใช้</div>'+
+      '<div class="gate-field"><input class="inp" id="lg-user" autocomplete="username" '+
+        'autocapitalize="off" spellcheck="false" placeholder="เช่น surat" '+
+        'value="'+esc(S.gateUser||'')+'"'+(busy?' disabled':'')+'></div>'+
+      '<div class="gate-lbl">รหัสผ่าน</div>'+
+      '<div class="gate-field"><input class="inp" id="lg-pass" style="padding-right:74px" '+
+        'type="'+(S.gateShowPw?'text':'password')+'" autocomplete="current-password" '+
+        'placeholder="รหัสผ่าน"'+(busy?' disabled':'')+'>'+
+        '<button class="eye" data-act="showPw">'+(S.gateShowPw?'ซ่อน':'แสดง')+'</button></div>'+
+      '<button class="btn btn-teal" data-act="login" style="margin-top:var(--sp-5)"'+(busy?' disabled':'')+'>'+
+        (busy?'กำลังเข้าสู่ระบบ…':'เข้าสู่ระบบ')+'</button>'+
+      (S.gateMsg?'<div class="gate-msg">'+esc(S.gateMsg)+'</div>':'')+
+      '<div class="gate-foot">'+VERSION+'</div>'+
+    '</div></div></div>';
+  el('layer').innerHTML='';
+  var u=el('lg-user'), pw=el('lg-pass');
+  if(!busy){ if(S.gateUser && pw) pw.focus(); else if(u) u.focus(); }
+}
+
+function doLogin(){
+  if(S.gateBusy) return;
+  var u=String((el('lg-user')||{}).value||'').trim();
+  var pwEl=el('lg-pass');
+  var pw=String((pwEl||{}).value||'');
+  S.gateUser=u;
+  if(!u){ S.gateMsg='กรุณาใส่ชื่อผู้ใช้'; renderGate(); return; }
+  if(!pw){ S.gateMsg='กรุณาใส่รหัสผ่าน'; renderGate(); return; }
+
+  S.gateBusy=true; S.gateMsg=''; renderGate();
+  apiPost({action:'login', username:u, password:pw, agent:navigator.userAgent}).then(function(r){
+    S.gateBusy=false;
+    if(r && r.ok && r.sid){
+      try{ localStorage.setItem(USER_KEY, u.toLowerCase()); }catch(e){}
+      S.sid=r.sid; S.user=r.user||null; saveAuth();
+      S.gateMsg=''; S.gateShowPw=false; S.view='home'; S.navStack=[];
+      loadCache(); setSync('loading'); render(true);
+      flushQueue().then(function(){ return reload(); }).then(function(){ render(); });
+      return;
+    }
+    S.gateMsg=(r && r.error) || 'เข้าสู่ระบบไม่สำเร็จ';
+    renderGate();
+  }).catch(function(){
+    S.gateBusy=false;
+    S.gateMsg='ต่อหลังบ้านไม่ได้ · เช็คอินเทอร์เน็ตแล้วลองใหม่';
+    renderGate();
+  });
+}
+
+function doLogout(){
+  closeModal();
+  toast('กำลังออกจากระบบ…');
+  flushQueue().then(function(){
+    return apiPost({action:'logout'}).catch(function(){ return null; });
+  }).catch(function(){ return null; }).then(function(){
+    try{ localStorage.removeItem(QUEUE_KEY); }catch(e){}
+    forceLogout('ออกจากระบบแล้ว');
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
    RENDER
    ══════════════════════════════════════════════════════════════ */
 function render(resetScroll){
+  if(!S.sid){ renderGate(); return; }
   var d=S.desktop;
   var body='';
   if(d) body+=sidebarHtml();
@@ -718,8 +884,79 @@ function viewHtml(){
     case 'history': return historyHtml();
     case 'summary': return summaryHtml();
     case 'print':   return printHtml();
+    case 'users':   return usersHtml();
   }
   return '';
+}
+
+/* ── ผู้ใช้ที่เข้าแอปได้ (เจ้าของเท่านั้น) ── */
+function usersHtml(){
+  var h='<div class="mid">'+pageHead('ผู้ใช้ที่เข้าแอปได้');
+  h+='<div class="card" style="margin-top:var(--sp-4);font-size:13.5px;line-height:1.65;color:var(--text-2)">'+
+     '<b style="color:var(--text);display:block;margin-bottom:4px">เพิ่มคนใหม่ทำในชีท</b>'+
+     'แท็บ <b>Users</b> → เพิ่มแถว แล้วใส่ <b>username</b> · <b>password</b> (พิมพ์รหัสลงไปตรงๆ) · '+
+     '<b>name</b> · <b>status</b> = approved'+
+     '<br>ครั้งแรกที่เขาล็อกอิน ระบบจะเข้ารหัสแล้วล้างช่อง password ทิ้งเอง — รหัสดิบไม่ค้างในชีท'+
+     '<br>ลืมรหัส: พิมพ์รหัสใหม่ลงช่อง password อีกครั้ง'+
+     (S.sheetUrl?'<div style="margin-top:var(--sp-3)"><a href="'+esc(S.sheetUrl)+
+        '" target="_blank" rel="noopener" style="font-weight:600">เปิดชีท Users →</a></div>':'')+
+     '</div>';
+
+  if(S.users===null){
+    h+='<div class="card muted" style="margin-top:var(--sp-3)">กำลังโหลดรายชื่อ…</div>';
+    return h+'</div>';
+  }
+  h+='<div style="margin-top:var(--sp-3);display:flex;flex-direction:column;gap:var(--sp-2)">';
+  if(!S.users.length) h+='<div class="card muted">ยังไม่มีผู้ใช้ในชีท</div>';
+  S.users.forEach(function(u){
+    var me=S.user && u.username===S.user.username;
+    var warn=!u.hasPassword;
+    h+='<div class="user-row">'+
+       avatar((u.name||u.username||'?').trim().slice(0,1).toUpperCase(),38,
+              {bg:'var(--teal-soft)',fg:'#0F766E'})+
+       '<div class="bd"><div class="one" style="font-size:var(--fs-base);font-weight:600">'+
+         esc(u.name||u.username)+(me?' (คุณ)':'')+'</div>'+
+       '<div class="one muted" style="font-size:var(--fs-cap)">@'+esc(u.username)+
+         (u.person?' · '+esc(u.person):'')+
+         (warn?' · ยังไม่ได้ตั้งรหัส':'')+'</div></div>'+
+       '<span class="role-chip" style="'+(u.approved?'':'background:var(--amber-bg);color:var(--amber)')+'">'+
+         esc(u.role==='owner'?'เจ้าของ':(u.approved?'เข้าได้':'ปิดอยู่'))+'</span>'+
+       (me?'':'<button class="btn btn-ghost" data-act="setStatus" data-u="'+esc(u.username)+'" '+
+              'data-ok="'+(u.approved?'0':'1')+'" style="flex:none;padding:8px 12px;font-size:var(--fs-cap)">'+
+              (u.approved?'ระงับ':'อนุมัติ')+'</button>')+
+       '</div>';
+  });
+  return h+'</div></div>';
+}
+
+function fetchUsers(){
+  apiPost({action:'listUsers'}).then(function(r){
+    if(r && r.code==='NOAUTH'){ forceLogout(); return; }
+    S.users=(r && r.ok && r.users) ? r.users : [];
+    if(r && r.sheetUrl) S.sheetUrl=r.sheetUrl;
+    if(r && !r.ok && r.error) toast(r.error);
+    if(S.view==='users') render();
+  }).catch(function(){
+    S.users=[];
+    toast('โหลดรายชื่อไม่ได้ · ต่อหลังบ้านไม่ติด');
+    if(S.view==='users') render();
+  });
+}
+
+function confirmSetStatus(username,approve){
+  openModal({
+    title: approve?'อนุมัติให้เข้าแอป?':'ระงับสิทธิ์?',
+    sub: approve ? '@'+username+' จะล็อกอินเข้าแอปได้ทันที'
+                 : '@'+username+' จะเข้าแอปไม่ได้ และถูกเตะออกจากทุกเครื่องภายใน 5 นาที',
+    okText: approve?'อนุมัติ':'ระงับ', cancelText:'ยกเลิก',
+    onOk:function(){
+      closeModal();
+      send({action:'setStatus', username:username, approve:approve}).then(function(r){
+        if(r && r.ok){ toast(approve?('อนุมัติ @'+username+' แล้ว'):('ระงับ @'+username+' แล้ว')); fetchUsers(); }
+      });
+      return true;
+    }
+  });
 }
 
 /* ── sidebar ───────────────────────────────────────────────── */
@@ -729,7 +966,7 @@ var NAV=[ {v:'home',label:'⌂ หน้าหลัก'}, {v:'history',label:'�
 function sidebarHtml(){
   var h='<div class="sidebar no-print"><div class="logo">✚ จัดยาโดยพญาบี</div>';
   NAV.forEach(function(n){
-    var on = S.view===n.v || (n.v==='home' && (S.view==='detail'||S.view==='alerts'||S.view==='person'||S.view==='form'));
+    var on = S.view===n.v || (n.v==='home' && (S.view==='detail'||S.view==='alerts'||S.view==='person'||S.view==='form'||S.view==='users'));
     h+='<button class="nav-item'+(on?' on':'')+'" data-act="nav" data-v="'+n.v+'">'+esc(n.label)+'</button>';
   });
   h+='<div class="side-label">สมาชิก</div>';
@@ -742,6 +979,7 @@ function sidebarHtml(){
   });
   h+='<button class="side-add" data-act="addPerson">＋ เพิ่มคน</button>';
   h+='<button class="side-cta" data-act="nav" data-v="form">＋ เพิ่มยา</button>';
+  h+=acctButtonHtml('side');
   h+='<div class="side-ver">'+VERSION+'<br>'+syncHtml()+'</div>';
   return h+'</div>';
 }
@@ -753,11 +991,43 @@ function tabbarHtml(){
   var h='<div class="tabbar no-print">';
   items.forEach(function(t){
     if(t.fab){ h+='<button class="fab" data-act="nav" data-v="form" aria-label="เพิ่มยา">＋</button>'; return; }
-    var on = S.view===t.v || (t.v==='home' && (S.view==='detail'||S.view==='alerts'||S.view==='person'));
+    var on = S.view===t.v || (t.v==='home' && (S.view==='detail'||S.view==='alerts'||S.view==='person'||S.view==='users'));
     h+='<button class="tb'+(on?' on':'')+'" data-act="nav" data-v="'+t.v+'">'+
        '<div class="ic">'+t.ic+'</div>'+esc(t.label)+'</button>';
   });
   return h+'</div>';
+}
+
+/* ── ปุ่ม/แผงบัญชีผู้ใช้ ───────────────────────────────────── */
+function acctInitial(){
+  var u=S.user||{};
+  return String(u.name||u.username||'?').trim().slice(0,1).toUpperCase();
+}
+function acctButtonHtml(where){
+  if(where==='top'){
+    return '<button class="icon-btn" data-act="account" aria-label="บัญชีผู้ใช้" style="padding:0;overflow:hidden">'+
+      avatar(acctInitial(),44,{bg:'var(--teal-soft)',fg:'#0F766E',fs:17})+'</button>';
+  }
+  var u=S.user||{};
+  return '<button class="side-acct" data-act="account"><div class="acct">'+
+    avatar(acctInitial(),30,{bg:'var(--sidebar-btn)',fg:'#0F3B36',fs:13})+
+    '<div class="bd"><div class="n">'+esc(u.name||'ผู้ใช้')+'</div>'+
+    '<div class="e">@'+esc(u.username||'')+'</div></div></div></button>';
+}
+function openAccountSheet(){
+  var u=S.user||{};
+  el('layer').innerHTML='<div class="mask" data-act="maskClose"><div class="modal">'+
+    '<div class="acct">'+avatar(acctInitial(),44,{bg:'var(--teal-soft)',fg:'#0F766E',fs:18})+
+      '<div class="bd"><div class="n" style="font-size:var(--fs-md)">'+esc(u.name||'ผู้ใช้')+'</div>'+
+      '<div class="e" style="font-size:var(--fs-cap);color:var(--text-2)">@'+esc(u.username||'')+'</div></div></div>'+
+    (u.role==='owner'
+      ? '<button class="btn btn-ghost" data-act="goUsers" style="width:100%;margin-top:18px;height:48px;'+
+        'border-radius:var(--r-md);font-size:var(--fs-md)">จัดการผู้ใช้ที่เข้าแอปได้</button>'
+      : '')+
+    '<div class="acts"><button class="no" data-act="modalCancel">ปิด</button>'+
+    '<button class="ok" data-act="logout" style="background:var(--req)">ออกจากระบบ</button></div>'+
+    '</div></div>';
+  S.modal={sheet:true};
 }
 
 /* ── hero / care / empty ───────────────────────────────────── */
@@ -909,7 +1179,9 @@ function mobileHomeHtml(){
   h+='<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:var(--sp-2)">'+
      '<div style="min-width:0"><div style="font-size:var(--fs-cap);color:var(--text-2)" class="one">'+esc(todayLabel())+'</div>'+
      '<div style="font-size:26px;font-weight:700;line-height:1.2">จัดยาโดยพญาบี</div></div>'+
-     '<button class="icon-btn no-print" data-act="nav" data-v="print" aria-label="พิมพ์">⎙</button></div>';
+     '<div style="display:flex;gap:var(--sp-2);flex:none" class="no-print">'+
+       '<button class="icon-btn" data-act="nav" data-v="print" aria-label="พิมพ์">⎙</button>'+
+       acctButtonHtml('top')+'</div></div>';
 
   h+='<div style="margin-top:14px">'+heroHtml(true)+'</div>';
   h+=alertBarHtml(true);
@@ -953,7 +1225,8 @@ function detailHtml(){
     '<div class="card" style="margin-top:var(--sp-4)">ไม่พบยานี้แล้ว (อาจถูกลบไป)</div></div>';
 
   var d=daysLeft(m), pct=Math.round(100*(m.remaining||0)/Math.max(m.qty||1,1));
-  var h='<div class="narrow">'+pageHead('รายละเอียดยา');
+  var h='<div class="narrow">'+pageHead('รายละเอียดยา','',
+    '<button class="btn btn-ghost no-print" data-act="editMed" data-id="'+esc(m.id)+'" style="flex:none">แก้ไข</button>');
 
   h+='<div class="card r20" style="margin-top:var(--sp-4);padding:18px"><div style="display:flex;gap:14px">'+
      '<button class="med-photo" data-act="photoMed" data-id="'+esc(m.id)+'" title="แตะเพื่อเปลี่ยนรูปฉลากยา">'+
@@ -1012,9 +1285,10 @@ function detailHtml(){
   return h+'</div>';
 }
 
-function pageHead(title,closeIcon){
+function pageHead(title,closeIcon,rightHtml){
   return '<div class="page-head"><button class="icon-btn no-print" data-act="back" aria-label="กลับ">'+
-         (closeIcon||'‹')+'</button><div class="t one">'+esc(title)+'</div></div>';
+         (closeIcon||'‹')+'</button><div class="t one" style="flex:1">'+esc(title)+'</div>'+
+         (rightHtml||'')+'</div>';
 }
 
 /* ── alerts ────────────────────────────────────────────────── */
@@ -1156,9 +1430,10 @@ function formHtml(){
   var f=S.form||(S.form=blankForm());
   if(!f.person && S.people.length) f.person=S.people[0].char;
 
+  var edit=!!f.editId;
   var h='<div class="narrow">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2)">'+
-    '<div style="font-size:20px;font-weight:700">เพิ่มยา</div>'+
+    '<div style="font-size:20px;font-weight:700">'+(edit?'แก้ไขยา':'เพิ่มยา')+'</div>'+
     '<button class="icon-btn" data-act="back" style="font-size:var(--fs-lg)" aria-label="ปิด">✕</button></div>';
 
   /* ชื่อยา */
@@ -1167,7 +1442,7 @@ function formHtml(){
     h+='<div style="margin-top:var(--sp-2);display:flex;gap:var(--sp-2)">'+
        '<input class="inp" id="f-name" value="'+esc(f.name)+'" placeholder="พิมพ์ชื่อยาใหม่…" '+
        'style="border:1.5px solid var(--teal)" autocomplete="off">'+
-       '<button class="btn btn-ghost" data-act="pickMode" style="flex:none;border-radius:var(--r-lg)">เลือกจากรายการ</button></div>';
+       (edit?'':'<button class="btn btn-ghost" data-act="pickMode" style="flex:none;border-radius:var(--r-lg)">เลือกจากรายการ</button>')+'</div>';
   }else{
     h+='<button class="dd-btn" id="f-dd" data-act="ddToggle" style="margin-top:var(--sp-2)">'+
        '<span class="v" style="color:'+(f.name?'var(--text)':'var(--text-3)')+'">'+
@@ -1184,13 +1459,29 @@ function formHtml(){
   });
   h+='<button class="pav dash" data-act="addPerson" aria-label="เพิ่มคน">＋</button></div>';
 
-  /* มื้อยา */
-  h+='<div class="lbl">มื้อยา <i>*</i></div><div style="margin-top:var(--sp-2);display:flex;gap:var(--sp-2);flex-wrap:wrap">';
-  MEALS.forEach(function(ml){
-    var on=f.meals.indexOf(ml)>=0;
-    h+='<button class="pick'+(on?' on':'')+'" data-act="toggleMeal" data-m="'+esc(ml)+'">'+esc(ml)+'</button>';
+  /* ความถี่ */
+  h+='<div class="lbl">ความถี่ <i>*</i></div><div style="margin-top:var(--sp-2);display:flex;gap:var(--sp-1)">';
+  FREQS.forEach(function(fq){
+    h+='<button class="pick seg seg3'+(f.freq===fq.v?' on':'')+'" data-act="freq" data-f="'+fq.v+'">'+esc(fq.label)+'</button>';
   });
   h+='</div>';
+
+  /* มื้อยา — ใช้เฉพาะยาที่กินทุกวัน */
+  if(f.freq==='daily'){
+    h+='<div class="lbl">มื้อยา <i>*</i></div><div style="margin-top:var(--sp-2);display:flex;gap:var(--sp-2);flex-wrap:wrap">';
+    MEALS.forEach(function(ml){
+      var on=f.meals.indexOf(ml)>=0;
+      h+='<button class="pick'+(on?' on':'')+'" data-act="toggleMeal" data-m="'+esc(ml)+'">'+esc(ml)+'</button>';
+    });
+    h+='</div>';
+  }else{
+    h+='<div style="margin-top:var(--sp-3);background:var(--teal-soft);border-radius:var(--r-md);'+
+       'padding:var(--sp-3) 14px;font-size:var(--fs-cap);color:var(--teal);line-height:1.55">'+
+       (f.freq==='weekly'
+         ? 'ยารายสัปดาห์ — แอปจะเฉลี่ยเป็นต่อวันให้เอง แล้วคำนวณวันหมดตามปกติ'
+         : 'ใช้เมื่อมีอาการ — แอปจะไม่คำนวณวันหมดให้ (ไม่รู้ว่าใช้บ่อยแค่ไหน)')+
+       '</div>';
+  }
 
   /* ครั้งละ + จำนวนที่ได้รับ */
   h+='<div style="margin-top:var(--sp-4);display:flex;gap:var(--sp-3)">'+
@@ -1199,7 +1490,8 @@ function formHtml(){
        '<button data-act="dose" data-d="-1" aria-label="ลด">−</button>'+
        '<b>'+f.dose+' '+esc(unitOf({name:f.name}))+'</b>'+
        '<button data-act="dose" data-d="1" aria-label="เพิ่ม">＋</button></div></div>'+
-     '<div style="flex:1;min-width:0"><div style="font-size:var(--fs-base);font-weight:600">จำนวนที่ได้รับ <i style="color:var(--req);font-style:normal">*</i></div>'+
+     '<div style="flex:1;min-width:0"><div style="font-size:var(--fs-base);font-weight:600">'+
+       (edit?'คงเหลือตอนนี้':'จำนวนที่ได้รับ')+' <i style="color:var(--req);font-style:normal">*</i></div>'+
      '<div class="qty-box" style="margin-top:var(--sp-2)"><input id="f-qty" inputmode="numeric" value="'+esc(f.qty)+'">'+
        '<span class="muted" style="font-size:var(--fs-base);padding-right:var(--sp-2)">'+esc(unitOf({name:f.name}))+'</span></div></div></div>';
 
@@ -1231,8 +1523,14 @@ function formHtml(){
   }
 
   h+='<button class="btn btn-teal" data-act="save" style="margin-top:var(--sp-5)"'+(S.saving?' disabled':'')+'>'+
-     (S.saving?'กำลังบันทึก…':'บันทึกยา')+'</button>';
+     (S.saving?'กำลังบันทึก…':(edit?'บันทึกการแก้ไข':'บันทึกยา'))+'</button>';
   h+='<div style="margin-top:var(--sp-2);text-align:center">'+syncHtml()+'</div>';
+  if(edit){
+    h+='<div class="danger-zone"><button class="btn btn-danger" data-act="delMed" data-id="'+esc(f.editId)+'">'+
+       'หยุดยาตัวนี้ (เอาออกจากรายการ)</button>'+
+       '<div style="margin-top:var(--sp-2);text-align:center;font-size:var(--fs-sm);color:var(--text-2)">'+
+       'ประวัติรับยาเดิมยังอยู่ในชีท ไม่ได้ลบทิ้ง</div></div>';
+  }
   return h+'</div>';
 }
 
@@ -1396,28 +1694,60 @@ function saveMed(){
 
   if(!String(f.name).trim()){ toast('กรุณาใส่ชื่อยา'); focusField('f-name','f-dd'); return; }
   if(!f.person){ toast('กรุณาเลือกผู้ใช้ยา'); return; }
-  if(!f.meals.length){ toast('กรุณาเลือกมื้อยาอย่างน้อย 1 มื้อ'); return; }
-  var qty=parseInt(String(f.qty).replace(/[^0-9]/g,''),10)||0;
-  if(!qty){ toast('กรุณาใส่จำนวนที่ได้รับ'); focusField('f-qty'); return; }
+  if(f.freq==='daily' && !f.meals.length){ toast('กรุณาเลือกมื้อยาอย่างน้อย 1 มื้อ'); return; }
+  var qtyRaw=String(f.qty).replace(/[^0-9]/g,'');
+  if(qtyRaw===''){ toast(f.editId?'กรุณาใส่จำนวนคงเหลือ':'กรุณาใส่จำนวนที่ได้รับ'); focusField('f-qty'); return; }
+  var qty=parseInt(qtyRaw,10)||0;
+  if(!f.editId && !qty){ toast('จำนวนที่ได้รับต้องมากกว่า 0'); focusField('f-qty'); return; }
   var iso=String(f.start||'').replace(/\//g,'-');
   if(!validIso(iso)){ toast('กรุณาใส่วันเริ่มใช้เป็น YYYY/MM/DD'); focusField('f-start'); return; }
 
+  var meals=(f.freq==='daily') ? sortMeals(f.meals) : [];
+
+  /* ── โหมดแก้ไข ── */
+  if(f.editId){
+    var m=findMed(f.editId);
+    if(!m){ toast('ไม่พบยานี้แล้ว'); return; }
+    m.name=String(f.name).trim(); m.person=f.person; m.meals=meals;
+    m.dose=f.dose; m.freq=f.freq; m.start=iso; m.lead=f.lead; m.note=f.note;
+    m.remaining=qty;
+    if(qty>(m.qty||0)) m.qty=qty;            /* นับใหม่ได้มากกว่ายอดฐาน → ขยับฐานตาม */
+    if(f.photo) m.photo_url=f.photo;
+    saveCache();
+
+    var editId=f.editId, photo=f.photo||'';
+    S.form=null; popView();                  /* กลับหน้าที่มา (รายละเอียดยา) */
+
+    send({ action:'updateMed', id:editId, name:m.name, person:m.person, meals:meals,
+           dose:m.dose, freq:m.freq, start:iso, remaining:String(qty), qty:String(m.qty),
+           lead:m.lead, note:m.note, photo:photo }).then(function(res){
+      if(res && res.ok){
+        if(res.photo_url){ var mm=findMed(editId); if(mm) mm.photo_url=res.photo_url; saveCache(); render(); }
+        toast('แก้ไขแล้ว · ซิงก์ Google Sheet');
+      } else if(res && res.queued){
+        toast('แก้ไขในเครื่องแล้ว · จะซิงก์ให้เมื่อเน็ตกลับมา');
+      }
+    });
+    return;
+  }
+
+  /* ── โหมดเพิ่มใหม่ ── */
   S.saving=true; render();
 
   var tempId='TMP-'+Date.now();
   var med={
-    id:tempId, name:String(f.name).trim(), person:f.person, meals:sortMeals(f.meals),
-    dose:f.dose, freq:'daily', start:iso, qty:qty, remaining:qty, lead:f.lead,
+    id:tempId, name:String(f.name).trim(), person:f.person, meals:meals,
+    dose:f.dose, freq:f.freq, start:iso, qty:qty, remaining:qty, lead:f.lead,
     tag:'', note:f.note, photo_url:f.photo||'',
     history:[{date:iso, qty:qty, place:'บันทึกเอง'}]
   };
   S.meds.push(med); saveCache();
 
-  var payload={action:'addMed', name:med.name, person:med.person, meals:med.meals, dose:med.dose,
-               freq:'daily', start:iso, qty:qty, lead:med.lead, note:med.note,
+  var payload={action:'addMed', name:med.name, person:med.person, meals:meals, dose:med.dose,
+               freq:med.freq, start:iso, qty:qty, lead:med.lead, note:med.note,
                photo:f.photo||'', place:'บันทึกเอง'};
 
-  S.form=null; S.saving=false; S.navStack=[]; S.view='home'; render(true);
+  S.form=null; S.saving=false; S.navStack=[]; S.view='home'; render(true); consumeHist();
 
   send(payload).then(function(res){
     if(res && res.ok){
@@ -1427,7 +1757,28 @@ function saveMed(){
       toast('บันทึกแล้ว · ซิงก์ Google Sheet');
       return reload().then(function(){ render(); });
     }
-    toast('บันทึกในเครื่องแล้ว · จะซิงก์ให้เมื่อเน็ตกลับมา');
+    if(res && res.queued) toast('บันทึกในเครื่องแล้ว · จะซิงก์ให้เมื่อเน็ตกลับมา');
+  });
+}
+
+/* หยุดยา — ซ่อนจากรายการ แต่ประวัติในชีทยังอยู่ (active=0) */
+function confirmDelMed(id){
+  var m=findMed(id); if(!m) return;
+  openModal({
+    title:'หยุดยาตัวนี้?',
+    sub:m.name+' — '+m.person+' จะหายจากรายการและการแจ้งเตือน · ประวัติรับยายังอยู่ในชีท',
+    okText:'หยุดยา', cancelText:'ยกเลิก',
+    onOk:function(){
+      closeModal();
+      S.meds=S.meds.filter(function(x){ return String(x.id)!==String(id); });
+      Object.keys(S.taken).forEach(function(k){ if(k.indexOf(id+'-')===0) delete S.taken[k]; });
+      saveCache();
+      S.form=null; S.selId=null;
+      navTo('home');
+      toast('หยุดยา '+m.name+' แล้ว');
+      send({action:'deleteMed', id:id});
+      return true;
+    }
   });
 }
 
@@ -1471,6 +1822,17 @@ document.addEventListener('click',function(ev){
     case 'addPerson':readFormInputs(); addPerson(); break;
     case 'receive':  receiveMed(t.dataset.id); break;
     case 'print':    window.print(); break;
+    case 'account':  openAccountSheet(); break;
+    case 'logout':   doLogout(); break;
+    case 'goUsers':  closeModal(); S.users=null; go('users'); fetchUsers(); break;
+    case 'setStatus': confirmSetStatus(t.dataset.u, t.dataset.ok==='1'); break;
+    case 'login':    doLogin(); break;
+    case 'showPw':   S.gateShowPw=!S.gateShowPw;
+                     S.gateUser=String((el('lg-user')||{}).value||'').trim();
+                     var pv=String((el('lg-pass')||{}).value||'');
+                     renderGate();
+                     if(el('lg-pass')){ el('lg-pass').value=pv; el('lg-pass').focus(); }
+                     break;
 
     case 'shareAll':    share(sortedMeds()); break;
     case 'shareAlerts': share(alertMeds()); break;
@@ -1492,6 +1854,9 @@ document.addEventListener('click',function(ev){
     }
     case 'dose':  readFormInputs(); S.form.dose=Math.max(1,S.form.dose+(+t.dataset.d)); S.form.dirty=true; render(); break;
     case 'lead':  readFormInputs(); S.form.lead=+t.dataset.n; S.form.dirty=true; render(); break;
+    case 'freq':  readFormInputs(); S.form.freq=t.dataset.f; S.form.dirty=true; render(); break;
+    case 'editMed': openEditForm(t.dataset.id); break;
+    case 'delMed':  confirmDelMed(t.dataset.id); break;
     case 'save':  saveMed(); break;
     case 'photoPick': readFormInputs(); pickPhoto(function(url,name){
         S.form.photo=url; S.form.photoName=name; S.form.dirty=true; render();
@@ -1522,7 +1887,7 @@ document.addEventListener('click',function(ev){
 });
 
 function submitModal(){
-  var cfg=S.modal; if(!cfg) return;
+  var cfg=S.modal; if(!cfg || !cfg.onOk) return;
   var v={};
   (cfg.fields||[]).forEach(function(f){ var n=el('m-'+f.id); v[f.id]=n?n.value:''; });
   cfg.onOk(v);
@@ -1535,11 +1900,15 @@ document.addEventListener('keydown',function(ev){
     if(S.modal){ closeModal(); return; }
   }
   if(ev.key==='Enter' && S.modal && ev.target.tagName==='INPUT'){ ev.preventDefault(); submitModal(); }
+  if(ev.key==='Enter' && !S.sid && ev.target && (ev.target.id==='lg-user'||ev.target.id==='lg-pass')){
+    ev.preventDefault(); doLogin();
+  }
 });
 
 /* พิมพ์ในฟอร์ม — เก็บค่าไว้ในสเตตโดยไม่ re-render (ไม่งั้น focus หลุด) */
 document.addEventListener('input',function(ev){
   var t=ev.target;
+  if(t && t.id==='lg-user'){ S.gateUser=t.value; return; }
   if(!S.form) return;
   if(t.id==='f-name'){ S.form.name=t.value; S.form.dirty=true; }
   else if(t.id==='f-note'){ S.form.note=t.value; S.form.dirty=true; }
@@ -1591,6 +1960,12 @@ function afterRender(){
 (function boot(){
   S.takenDate=todayIso();
   S.mealTab=currentMeal();
+  loadAuth();
+  if(!S.sid){                                   /* ไม่มีสิทธิ์ = ไม่เก็บข้อมูลยาไว้ในเครื่อง */
+    try{ localStorage.removeItem(CACHE_KEY); }catch(e){}
+    try{ S.gateUser=localStorage.getItem(USER_KEY)||''; }catch(e){}
+    renderGate(); return;
+  }
   loadCache();
   S.form=null;
   setSync(navigator.onLine===false?'error':'loading');
