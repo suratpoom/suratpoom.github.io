@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F3B36">
+<title>จัดยาโดยพญาบี v1.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font:'Bai Jamjuree',system-ui,sans-serif;
+
+  --bg:#F4F7F6;
+  --card:#ffffff;
+  --line:#E3E9E7;
+  --line-soft:#EFF4F2;
+  --line-input:#C9D6D2;
+
+  --text:#10201D;
+  --text-2:#5B6B67;
+  --text-3:#8FA8A2;
+
+  --teal:#0F766E;
+  --teal-dark:#0a5a50;
+  --teal-soft:#E0EFEC;
+  --teal-row:#EFF7F5;
+
+  --sidebar:#0F3B36;
+  --sidebar-btn:#4FB3A9;
+  --sidebar-text:#C3DCD7;
+  --sidebar-label:#93BDB6;
+  --sidebar-active:rgba(255,255,255,.14);
+  --sidebar-hover:rgba(255,255,255,.08);
+
+  --amber:#B45309;
+  --amber-deep:#78350F;
+  --amber-bg:#FEF3C7;
+  --amber-line:#F5E3A6;
+  --amber-row:#FFFBEB;
+  --amber-person:#FBD38D;
+
+  --line-green:#06C755;
+  --req:#B91C1C;
+
+  --fs-xs:11.5px;
+  --fs-sm:12.5px;
+  --fs-cap:13px;
+  --fs-base:14px;
+  --fs-md:15px;
+  --fs-lg:16px;
+  --fs-xl:21px;
+  --fs-2xl:24px;
+  --fs-3xl:30px;
+
+  --sp-1:6px;
+  --sp-2:8px;
+  --sp-3:12px;
+  --sp-4:16px;
+  --sp-5:20px;
+  --sp-6:24px;
+
+  --r-sm:10px;
+  --r-md:12px;
+  --r-lg:14px;
+  --r-xl:16px;
+  --r-2xl:20px;
+
+  --shadow-fab:0 6px 16px rgba(15,118,110,.35);
+  --shadow-card:0 10px 30px rgba(15,59,54,.08);
+
+  --z-sticky:100;
+  --z-dropdown:1000;
+  --z-modal:2000;
+  --z-toast:3000;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+}
+button,input,textarea,select{font-family:var(--font);font-size:inherit;color:inherit}
+img{display:block;max-width:100%}
+a{color:var(--teal)}
+
+.shell{min-height:100vh;min-height:100dvh;display:flex}
+.content{flex:1;min-width:0;display:flex;flex-direction:column}
+.wrap{flex:1;width:100%;max-width:1120px;margin:0 auto;padding:22px 20px 130px}
+.narrow{max-width:480px;margin:0 auto}
+.mid{max-width:560px;margin:0 auto}
+.wide{max-width:760px;margin:0 auto}
+
+/* ───────── sidebar (desktop) ───────── */
+.sidebar{
+  width:232px;flex:none;background:var(--sidebar);color:#fff;
+  padding:var(--sp-6) 14px;display:flex;flex-direction:column;gap:3px;
+  position:sticky;top:0;height:100vh;height:100dvh;overflow:auto;
+}
+.sidebar .logo{font-size:19px;font-weight:700;padding:0 var(--sp-3) 18px}
+.nav-item{width:100%;text-align:left;background:transparent;border:0;
+  border-radius:var(--r-md);padding:11px 14px;font-size:14.5px;cursor:pointer;color:var(--sidebar-text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-item:hover{background:var(--sidebar-hover)}
+.nav-item.on{background:var(--sidebar-active);color:#fff;font-weight:600}
+.side-label{margin-top:18px;padding:0 var(--sp-3);font-size:var(--fs-xs);font-weight:600;color:var(--sidebar-label);letter-spacing:.8px}
+.side-person{width:100%;text-align:left;background:transparent;border:0;
+  display:flex;align-items:center;gap:var(--sp-2);padding:7px var(--sp-3);font-size:var(--fs-base);
+  color:#fff;cursor:pointer;border-radius:var(--r-sm);min-width:0}
+.side-person:hover{background:var(--sidebar-hover)}
+.side-person.warn{color:var(--amber-person)}
+.side-person span.nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side-add{width:100%;text-align:left;background:transparent;border:0;border-radius:var(--r-sm);
+  padding:9px var(--sp-3);font-size:var(--fs-base);color:var(--sidebar-text);cursor:pointer}
+.side-add:hover{background:var(--sidebar-hover)}
+.side-add:hover{color:#fff}
+.side-cta{margin-top:auto;height:46px;border:0;border-radius:var(--r-md);background:var(--sidebar-btn);color:var(--sidebar);
+  font-weight:700;font-size:var(--fs-md);display:flex;align-items:center;justify-content:center;cursor:pointer;width:100%}
+.side-ver{padding:var(--sp-3) var(--sp-3) 0;font-size:var(--fs-xs);color:var(--sidebar-label);line-height:1.5}
+
+/* ───────── avatars ───────── */
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none;
+  color:var(--sidebar);overflow:hidden;text-align:center;line-height:1}
+.av.sq{border-radius:var(--r-md)}
+.av img{width:100%;height:100%;object-fit:cover}
+
+/* ───────── cards & bits ───────── */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-xl);padding:var(--sp-5)}
+.card.r20{border-radius:var(--r-2xl)}
+.h-title{font-size:var(--fs-lg);font-weight:700}
+.muted{color:var(--text-2)}
+.one{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+
+.btn{border:0;cursor:pointer;font-family:var(--font);display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-1)}
+.btn-line{background:var(--line-green);color:#fff;font-weight:700;border-radius:var(--r-sm);padding:10px 18px;font-size:13.5px}
+.btn-line.block{width:100%;height:54px;border-radius:var(--r-xl);font-size:16.5px}
+.btn-teal{background:var(--teal);color:#fff;font-weight:700;border-radius:var(--r-xl);height:52px;width:100%;font-size:17px}
+.btn-ghost{background:var(--card);border:1px solid var(--line-input);border-radius:var(--r-sm);padding:10px 16px;font-size:13.5px;color:var(--text)}
+.icon-btn{width:44px;height:44px;flex:none;border-radius:var(--r-md);background:var(--card);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--teal);cursor:pointer}
+.btn[disabled]{opacity:.55;cursor:default}
+
+.alert-bar{background:var(--amber-bg);border:1px solid var(--amber-line);border-radius:var(--r-lg);
+  padding:var(--sp-3) 18px;font-size:14.5px;color:var(--amber-deep);line-height:1.5}
+
+.page-head{display:flex;align-items:center;gap:var(--sp-3)}
+.page-head .t{font-size:var(--fs-lg);font-weight:600;min-width:0}
+
+/* ───────── hero ───────── */
+.hero{position:relative;border-radius:var(--r-2xl);overflow:hidden;background:var(--sidebar);
+  box-shadow:var(--shadow-card)}
+.hero img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.hero .scrim{position:absolute;inset:0;background:linear-gradient(95deg,rgba(15,59,54,.92) 0%,rgba(15,59,54,.72) 45%,rgba(15,59,54,.18) 100%)}
+.hero .inner{position:relative;padding:22px 24px;color:#fff}
+.hero .kicker{font-size:var(--fs-sm);font-weight:600;letter-spacing:.6px;color:#9FD6CE}
+.hero h2{margin:6px 0 0;font-size:var(--fs-2xl);font-weight:700;line-height:1.25}
+.hero p{margin:6px 0 0;font-size:13.5px;color:#CFE6E2;line-height:1.5}
+.hero.desk{height:184px}
+.hero.desk .inner{padding:26px 28px}
+.hero.mob{height:138px}
+.hero.mob .inner{padding:16px 18px}
+.hero.mob h2{font-size:19px}
+.hero.mob p{font-size:var(--fs-cap)}
+
+.care{background:var(--card);border:1px solid var(--line);border-radius:var(--r-xl);overflow:hidden}
+.care .ph{height:112px;background:var(--teal-soft);position:relative}
+.care .ph img{width:100%;height:100%;object-fit:cover}
+.care .tx{padding:14px 18px;font-size:13.5px;color:var(--text-2);line-height:1.55}
+.care .tx b{color:var(--text);display:block;font-size:var(--fs-base);margin-bottom:3px}
+
+.empty{background:var(--card);border:1px solid var(--line);border-radius:var(--r-2xl);overflow:hidden;text-align:center}
+.empty .ph{height:150px;background:var(--teal-soft)}
+.empty .ph img{width:100%;height:100%;object-fit:cover;opacity:.92}
+.empty .tx{padding:18px var(--sp-5) var(--sp-5)}
+.empty .tx b{font-size:var(--fs-lg)}
+.empty .tx p{margin:6px 0 14px;font-size:13.5px;color:var(--text-2);line-height:1.5}
+
+/* ───────── stats ───────── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--sp-3)}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r-xl);padding:18px;
+  text-align:left;width:100%;color:var(--text);font-family:var(--font)}
+.stat .lb{font-size:var(--fs-sm);opacity:.75}
+.stat .vl{font-size:var(--fs-3xl);font-weight:700;line-height:1.25;color:var(--teal)}
+.stat .sb{font-size:var(--fs-sm);opacity:.7}
+.stat.hot{background:var(--amber);border-color:var(--amber);color:#fff;cursor:pointer}
+.stat.hot .vl{color:#fff}
+.stat .lb,.stat .sb{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ───────── table (desktop) ───────── */
+.tbl-head,.tbl-row{display:grid;grid-template-columns:2fr .6fr 1.4fr 1fr .8fr;gap:var(--sp-2);align-items:center}
+.tbl-head{padding:var(--sp-2) var(--sp-3);background:var(--bg);border-radius:var(--r-sm);
+  font-size:12px;font-weight:600;color:var(--text-2)}
+.tbl-row{padding:13px var(--sp-3);border-bottom:1px solid var(--line-soft);font-size:var(--fs-base);
+  cursor:pointer;border-radius:var(--r-sm);width:100%;text-align:left;background:transparent;border-left:0;border-right:0;border-top:0}
+.tbl-row:hover{background:var(--teal-row)}
+.tbl-row.warn{background:var(--amber-row)}
+.tbl-row>*{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ───────── refills ───────── */
+.refill{display:flex;gap:var(--sp-3);align-items:flex-start}
+.refill .dt{flex:none;width:46px;text-align:center;border-radius:var(--r-sm);padding:var(--sp-1) 0;background:var(--bg)}
+.refill .dt.hot{background:var(--amber-bg)}
+.refill .dt .d{font-size:var(--fs-lg);font-weight:700}
+.refill .dt .m{font-size:10.5px}
+.refill .tx{font-size:13.5px;line-height:1.45;min-width:0}
+
+/* ───────── list cards (mobile) ───────── */
+.row-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-xl);padding:var(--sp-3) 14px;
+  display:flex;align-items:center;gap:var(--sp-3);cursor:pointer;width:100%;text-align:left}
+.row-card:hover{border-color:var(--teal)}
+.row-card .bd{flex:1;min-width:0}
+.row-card .t1{font-size:var(--fs-md);font-weight:600}
+.row-card .t2{font-size:var(--fs-cap);color:var(--text-2)}
+.row-card .rt{font-size:12px;font-weight:600;flex:none;color:var(--teal)}
+.row-card .rt.warn{color:var(--amber)}
+
+.chk{width:26px;height:26px;border-radius:var(--r-sm);background:var(--card);border:1.5px solid var(--line-input);
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:var(--fs-cap);flex:none}
+.chk.on{background:var(--teal);border-color:var(--teal)}
+.badge-warn{font-size:12px;font-weight:600;color:var(--amber);background:var(--amber-bg);
+  padding:4px var(--sp-2);border-radius:var(--r-sm);flex:none}
+
+.sec-label{margin-top:var(--sp-5);font-size:var(--fs-base);font-weight:600;color:var(--text-2);letter-spacing:.4px}
+
+/* meal switch */
+.meal-tabs{display:flex;gap:var(--sp-1);margin-top:var(--sp-2);overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.meal-tabs::-webkit-scrollbar{display:none}
+.meal-tab{flex:1;min-width:72px;border:1px solid var(--line-input);background:var(--card);color:var(--text-2);
+  border-radius:var(--r-md);padding:9px 0;font-size:var(--fs-cap);cursor:pointer;white-space:nowrap}
+.meal-tab.on{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:600}
+.meal-tab .n{font-size:11px;opacity:.85;margin-left:4px}
+
+/* ───────── people strip ───────── */
+.people-strip{margin-top:var(--sp-5);display:flex;gap:var(--sp-3);align-items:flex-start;overflow-x:auto;padding-bottom:var(--sp-1)}
+.people-strip::-webkit-scrollbar{display:none}
+.p-cell{text-align:center;min-width:60px;cursor:pointer;background:none;border:0;padding:0;flex:none}
+.p-cell .sub{font-size:12px;margin-top:4px;color:var(--text-2);max-width:66px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-cell .sub.warn{color:var(--amber);font-weight:600}
+.p-dash{width:52px;height:52px;border-radius:50%;border:1.5px dashed var(--text-3);color:var(--teal);
+  font-size:22px;display:flex;align-items:center;justify-content:center;margin:0 auto;background:none}
+
+/* ───────── detail ───────── */
+.med-photo{width:84px;height:84px;border-radius:var(--r-lg);background:var(--teal-soft);border:1.5px dashed var(--text-3);
+  display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;color:var(--teal);
+  line-height:1.3;flex:none;overflow:hidden;cursor:pointer;padding:0}
+.med-photo img{width:100%;height:100%;object-fit:cover}
+.chip{font-size:var(--fs-cap);padding:4px var(--sp-2);border-radius:20px;white-space:nowrap}
+.chip.person{background:var(--teal);color:#fff;font-weight:600}
+.chip.tag{background:var(--teal-soft);color:var(--teal)}
+.meal-chip{flex:1;text-align:center;font-size:var(--fs-cap);background:var(--bg);color:var(--text-3);
+  padding:var(--sp-2) 0;border-radius:var(--r-md);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.meal-chip.on{background:var(--teal);color:#fff;font-weight:600}
+.bar{margin-top:var(--sp-2);height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.bar>i{display:block;height:8px;background:var(--teal);border-radius:4px}
+.kv{display:flex;justify-content:space-between;gap:var(--sp-2);padding:var(--sp-3) 0;border-bottom:1px solid var(--line-soft);font-size:var(--fs-base)}
+.kv:last-child{border-bottom:0}
+.note-box{margin-top:var(--sp-1);background:var(--bg);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3);
+  font-size:var(--fs-base);line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.hist-row{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--sp-2) 14px;
+  display:flex;justify-content:space-between;gap:var(--sp-2);font-size:var(--fs-cap)}
+
+/* ───────── form ───────── */
+.lbl{margin-top:var(--sp-4);font-size:var(--fs-base);font-weight:600}
+.lbl i{color:var(--req);font-style:normal}
+.inp{width:100%;background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:13px var(--sp-4);font-size:var(--fs-md);outline:none}
+.inp:focus{border-color:var(--teal)}
+.inp.h52{height:52px;padding:var(--sp-3) 14px;font-weight:600}
+textarea.inp{min-height:64px;resize:vertical;font-size:var(--fs-base)}
+.dd-btn{width:100%;background:var(--card);border:1.5px solid var(--teal);border-radius:var(--r-lg);
+  padding:13px var(--sp-4);display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);cursor:pointer;text-align:left}
+.dd-btn .v{font-size:var(--fs-md);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dd-list{position:fixed;background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  overflow:auto;max-height:260px;z-index:var(--z-dropdown);box-shadow:0 12px 30px rgba(15,32,29,.16)}
+.dd-item{padding:var(--sp-3) var(--sp-4);font-size:var(--fs-base);border-bottom:1px solid var(--line-soft);cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dd-item:hover,.dd-item.hi{background:var(--teal-row)}
+.dd-item.add{color:var(--teal);font-weight:600;border-bottom:0}
+.pick{border:1px solid var(--line-input);background:var(--card);color:var(--text);border-radius:var(--r-md);
+  padding:10px var(--sp-4);font-size:var(--fs-base);cursor:pointer;white-space:nowrap}
+.pick.on{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:600}
+.pick.seg{flex:1;text-align:center;padding:var(--sp-3) 0}
+.pav{width:46px;height:46px;border-radius:50%;border:1px solid var(--line-input);background:var(--card);
+  display:flex;align-items:center;justify-content:center;font-weight:600;cursor:pointer;flex:none;overflow:hidden;padding:0}
+.pav.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.pav.dash{border:1.5px dashed var(--text-3);color:var(--teal);font-size:20px}
+.stepper{height:52px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  display:flex;align-items:center;justify-content:space-between;padding:var(--sp-1);gap:var(--sp-1)}
+.stepper button{width:38px;height:38px;border:0;border-radius:var(--r-sm);background:var(--bg);font-size:18px;cursor:pointer;flex:none}
+.stepper b{font-size:17px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qty-box{height:52px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:var(--sp-1) var(--sp-1) var(--sp-1) var(--sp-4);display:flex;align-items:center;gap:var(--sp-2)}
+.qty-box input{width:100%;min-width:0;border:0;outline:none;font-size:var(--fs-lg);font-weight:700;background:transparent}
+.drop-photo{margin-top:14px;border:1.5px dashed var(--text-3);border-radius:var(--r-lg);padding:18px;
+  text-align:center;font-size:var(--fs-base);color:var(--teal);cursor:pointer;width:100%;background:var(--card)}
+.photo-prev{margin-top:14px;display:flex;gap:var(--sp-3);align-items:center;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--sp-3)}
+.photo-prev img{width:72px;height:72px;object-fit:cover;border-radius:var(--r-md);flex:none}
+
+/* ───────── bottom tabs (mobile) ───────── */
+.tabbar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-around;
+  padding:var(--sp-2) var(--sp-2) calc(var(--sp-5) + env(safe-area-inset-bottom));z-index:var(--z-sticky)}
+.tabbar .tb{text-align:center;color:var(--text-3);font-size:12px;min-width:56px;cursor:pointer;background:none;border:0;padding:0}
+.tabbar .tb .ic{font-size:18px;line-height:1.3}
+.tabbar .tb.on{color:var(--teal);font-weight:600}
+.fab{width:56px;height:56px;border:0;border-radius:50%;background:var(--teal);color:#fff;font-size:26px;
+  display:flex;align-items:center;justify-content:center;margin-top:-34px;box-shadow:var(--shadow-fab);cursor:pointer;flex:none}
+
+/* ───────── toast / modal ───────── */
+#toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--text);color:#fff;
+  padding:var(--sp-3) 22px;border-radius:var(--r-md);font-size:var(--fs-base);z-index:var(--z-toast);
+  max-width:calc(100vw - 32px);text-align:center;line-height:1.45;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.mask{position:fixed;inset:0;background:rgba(15,32,29,.45);z-index:var(--z-modal);
+  display:flex;align-items:flex-end;justify-content:center;padding:var(--sp-4)}
+@media(min-width:600px){.mask{align-items:center}}
+.modal{background:var(--card);border-radius:var(--r-2xl);padding:var(--sp-5);width:100%;max-width:420px;
+  box-shadow:0 20px 50px rgba(15,32,29,.28)}
+.modal h3{margin:0 0 var(--sp-1);font-size:18px}
+.modal p.sub{margin:0 0 var(--sp-3);font-size:var(--fs-cap);color:var(--text-2)}
+.modal .acts{display:flex;gap:var(--sp-2);margin-top:var(--sp-4)}
+.modal .acts button{flex:1;height:48px;border-radius:var(--r-md);font-size:var(--fs-md);font-weight:600}
+.modal .acts .ok{background:var(--teal);color:#fff;border:0}
+.modal .acts .no{background:var(--card);border:1px solid var(--line-input);color:var(--text-2)}
+
+.sync{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--text-2)}
+.sync .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);flex:none}
+.sync.off .dot{background:var(--amber)}
+.sync.err .dot{background:var(--req)}
+
+@media print{
+  .sidebar,.tabbar,.no-print{display:none!important}
+  body{background:#fff}
+  .wrap{padding:0;max-width:none}
+  .card{border:0;box-shadow:none;padding:0}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="layer"></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ══════════════════════════════════════════════════════════════
+   จัดยาโดยพญาบี (B-Med) v1.0
+   แอปบันทึกการใช้ยาของสมาชิกในครอบครัว
+   หลังบ้าน: Google Apps Script → Google Sheet + Google Drive (รูปฉลากยา)
+   ══════════════════════════════════════════════════════════════ */
+
+var VERSION  = 'v1.0';
+var API_URL  = 'https://script.google.com/macros/s/AKfycbyl8eAAYuyNHX1T7SNIIPMHbLoFnF7oNlrcQpxJ0Q7ArbMeOLPw_4ShuX5_h1O1b8D7LA/exec';
+var CACHE_KEY = 'bmed-cache-v1';
+var QUEUE_KEY = 'bmed-queue-v1';
+
+var IMG = {
+  hero : 'https://images.unsplash.com/photo-1563213126-a4273aed2016?auto=format&fit=crop&w=1400&q=70',
+  care : 'https://images.unsplash.com/photo-1624711076872-ecdbc5ade023?auto=format&fit=crop&w=900&q=70',
+  empty: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=900&q=70'
+};
+
+var MEALS    = ['เช้า','กลางวัน','เย็น','ก่อนนอน'];
+var TH_MON   = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+var TH_DAY   = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+var PALETTE  = ['#4FB3A9','#E6B35A','#9BC47E','#8FB6E0','#D89AB5','#C9A97E'];
+
+/* ── state ─────────────────────────────────────────────────── */
+var S = {
+  view:'home', navStack:[], selId:null, selPerson:null,
+  people:[], meds:[], taken:{}, takenDate:'',
+  mealTab:'', sync:'loading', lastError:'',
+  dd:false, ddHi:-1,
+  form:null, saving:false, modal:null, desktop:window.innerWidth>=900
+};
+
+function blankForm(){
+  return { name:'', newName:false, person:'', meals:['เช้า'], dose:1, qty:'30',
+           start:todayIso(), lead:7, note:'', photo:'', photoName:'', dirty:false };
+}
+
+/* ── date helpers (ใช้เวลาเครื่อง = Asia/Bangkok ไม่ใช่ UTC) ─── */
+function isoOf(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function todayIso(){ return isoOf(new Date()); }
+function parseIso(iso){ var p=String(iso||'').split('-'); return new Date(+p[0],(+p[1]||1)-1,+p[2]||1); }
+function addDays(iso,n){ var d=parseIso(iso); d.setDate(d.getDate()+n); return isoOf(d); }
+function validIso(iso){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(iso||''))) return false;
+  var p=String(iso).split('-'), d=new Date(+p[0],+p[1]-1,+p[2]);
+  return d.getFullYear()===+p[0] && d.getMonth()===+p[1]-1 && d.getDate()===+p[2];
+}
+function fmtTh(iso){
+  if(!validIso(iso)) return '—';
+  var d=parseIso(iso);
+  return d.getDate()+' '+TH_MON[d.getMonth()]+' '+(d.getFullYear()+543);
+}
+function todayLabel(){
+  var d=new Date();
+  return TH_DAY[d.getDay()]+'ที่ '+fmtTh(todayIso());
+}
+function currentMeal(){
+  var h=new Date().getHours();
+  if(h<11) return 'เช้า';
+  if(h<15) return 'กลางวัน';
+  if(h<20) return 'เย็น';
+  return 'ก่อนนอน';
+}
+
+/* ── med maths ─────────────────────────────────────────────── */
+function unitOf(m){
+  var n=String(m.name||'');
+  if(/พ่น|สเปรย|inhal/i.test(n)) return 'หลอด';
+  if(/น้ำ|ไซรัป|syrup|ขวด|หยอด/i.test(n)) return 'ขวด';
+  return 'เม็ด';
+}
+function perDay(m){
+  if(m.freq==='weekly')   return (m.dose||1)/7;
+  if(m.freq==='asneeded') return 0;
+  return (m.meals||[]).length*(m.dose||1);
+}
+function daysLeft(m){ var p=perDay(m); return p>0 ? Math.floor((m.remaining||0)/p) : null; }
+function isWarn(m){ var d=daysLeft(m); return d!=null && d<=(m.lead||7); }
+function outIso(m){ var d=daysLeft(m); return d==null?null:addDays(todayIso(),d); }
+function refillIso(m){ var d=daysLeft(m); return d==null?null:addDays(todayIso(),Math.max(d-(m.lead||7),0)); }
+function mealsText(m){
+  if(m.freq==='weekly')   return 'สัปดาห์ละครั้ง';
+  if(m.freq==='asneeded') return 'เมื่อมีอาการ';
+  return sortMeals(m.meals||[]).join(' · ') || '—';
+}
+function sortMeals(a){ return a.slice().sort(function(x,y){ return MEALS.indexOf(x)-MEALS.indexOf(y); }); }
+function daysText(m){ var d=daysLeft(m); return d==null?'—':(d+' วัน'+(isWarn(m)?' ⚠':'')); }
+function remainText(m){ return (m.remaining||0)+' '+unitOf(m); }
+function alertMeds(){ return S.meds.filter(isWarn).sort(byUrgency); }
+function byUrgency(a,b){
+  var da=daysLeft(a), db=daysLeft(b);
+  if(da==null&&db==null) return String(a.name).localeCompare(String(b.name),'th');
+  if(da==null) return 1;
+  if(db==null) return -1;
+  if(da!==db) return da-db;
+  return String(a.name).localeCompare(String(b.name),'th');
+}
+function sortedMeds(){ return S.meds.slice().sort(byUrgency); }
+function personColor(ch){
+  var i=S.people.findIndex(function(p){ return p.char===ch; });
+  return PALETTE[(i<0?0:i)%PALETTE.length];
+}
+function medsOf(ch){ return sortedMeds().filter(function(m){ return m.person===ch; }); }
+function personLabel(p){ return p.name && p.name!==p.char ? p.name : p.char; }
+
+/* ── tiny dom helpers ──────────────────────────────────────── */
+function esc(s){
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function el(id){ return document.getElementById(id); }
+function avatar(ch,size,opt){
+  opt=opt||{};
+  var t=String(ch||'?'), fs=opt.fs||Math.round(size*0.42);
+  if(t.length>2) fs=Math.round(fs*0.72);
+  if(t.length>4) fs=Math.round(fs*0.8);
+  var bg=opt.bg||personColor(ch), fg=opt.fg||'#0F3B36';
+  var bd=opt.border?('border:'+opt.border+';'):'';
+  return '<span class="av'+(opt.square?' sq':'')+'" style="width:'+size+'px;height:'+size+'px;background:'+bg+
+         ';color:'+fg+';font-size:'+fs+'px;'+bd+'">'+esc(t)+'</span>';
+}
+function imgTag(src,alt,cls){
+  return '<img src="'+esc(src)+'" alt="'+esc(alt||'')+'" loading="lazy" referrerpolicy="no-referrer" '+
+         (cls?'class="'+cls+'" ':'')+'onerror="this.style.display=\'none\'">';
+}
+
+/* ── toast ─────────────────────────────────────────────────── */
+var toastTimer=null;
+function toast(msg){
+  var t=el('toast');
+  t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ t.classList.remove('on'); },2400);
+}
+
+/* ── storage ───────────────────────────────────────────────── */
+function saveCache(){
+  try{
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      people:S.people, meds:S.meds, taken:S.taken, takenDate:S.takenDate, at:Date.now()
+    }));
+  }catch(e){}
+}
+function loadCache(){
+  try{
+    var raw=localStorage.getItem(CACHE_KEY); if(!raw) return false;
+    var c=JSON.parse(raw);
+    S.people=c.people||[]; S.meds=c.meds||[];
+    S.taken = (c.takenDate===todayIso()) ? (c.taken||{}) : {};
+    S.takenDate=todayIso();
+    return true;
+  }catch(e){ return false; }
+}
+function getQueue(){ try{ return JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]'); }catch(e){ return []; } }
+function setQueue(q){ try{ localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }catch(e){} }
+function pushQueue(job){ var q=getQueue(); q.push(job); if(q.length>50) q.shift(); setQueue(q); }
+
+/* ── api ───────────────────────────────────────────────────── */
+function apiGet(action){
+  return fetch(API_URL+'?action='+encodeURIComponent(action)+'&t='+Date.now(),{method:'GET'})
+    .then(function(r){ return r.json(); });
+}
+function apiPost(payload){
+  return fetch(API_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},   /* text/plain = ไม่โดน CORS preflight ของ GAS */
+    body:JSON.stringify(payload)
+  }).then(function(r){ return r.json(); });
+}
+function setSync(kind,msg){ S.sync=kind; S.lastError=msg||''; paintSync(); }
+function paintSync(){
+  var n=document.querySelectorAll('[data-sync]');
+  for(var i=0;i<n.length;i++) n[i].outerHTML=syncHtml();
+}
+function syncHtml(){
+  var cls='sync', tx='ซิงก์ Google Sheet แล้ว';
+  if(S.sync==='loading'){ tx='กำลังโหลดจาก Google Sheet…'; }
+  else if(S.sync==='queued'){ cls+=' off'; tx='บันทึกในเครื่องแล้ว · รอซิงก์'; }
+  else if(S.sync==='error'){ cls+=' err'; tx='ต่อหลังบ้านไม่ได้ · ใช้ข้อมูลในเครื่อง'; }
+  return '<span class="'+cls+'" data-sync><i class="dot"></i>'+esc(tx)+'</span>';
+}
+
+/* ส่งงานขึ้นหลังบ้าน — ล้มเหลวก็เก็บเข้าคิวไว้ ไม่ให้ผู้ใช้เสียงาน */
+function send(payload,opt){
+  opt=opt||{};
+  return apiPost(payload).then(function(res){
+    if(!res || !res.ok) throw new Error((res&&res.error)||'บันทึกไม่สำเร็จ');
+    setSync('ok');
+    if(opt.onOk) opt.onOk(res);
+    return res;
+  }).catch(function(err){
+    if(opt.noQueue){ throw err; }
+    pushQueue(payload);
+    setSync('queued');
+    return {ok:false, queued:true, error:String(err&&err.message||err)};
+  });
+}
+function flushQueue(){
+  if(!getQueue().length) return Promise.resolve(false);
+  var sent=0;
+  function step(){
+    var cur=getQueue();
+    if(!cur.length) return Promise.resolve(sent>0);
+    return apiPost(cur[0]).then(function(r){
+      cur.shift(); setQueue(cur);          /* ได้คำตอบแล้ว (สำเร็จหรือถูกปฏิเสธ) → ทิ้งงานนี้ ไม่ส่งซ้ำ */
+      if(r && r.ok) sent++;
+      return step();
+    }).catch(function(){ return sent>0; }); /* ต่อเน็ตไม่ได้ → เก็บไว้ทั้งคิว ลองใหม่รอบหน้า */
+  }
+  return step();
+}
+function reload(){
+  return apiGet('load').then(function(res){
+    if(!res || !res.ok) throw new Error((res&&res.error)||'โหลดข้อมูลไม่สำเร็จ');
+    S.people = res.people||[];
+    S.meds   = res.meds||[];
+    S.taken  = res.taken||{};
+    S.takenDate = res.today || todayIso();
+    saveCache(); setSync('ok');
+    return true;
+  }).catch(function(err){
+    setSync('error', String(err&&err.message||err));
+    return false;
+  });
+}
+
+/* ── navigation (stack) ────────────────────────────────────── */
+/* ปุ่มย้อนกลับของเครื่อง (Android/เบราว์เซอร์) ต้องย้อน "หน้าในแอป" ไม่ใช่ออกจากแอป
+   วิธี: วาง history entry ดักไว้ 1 อัน ตราบใดที่ยังมีหน้าให้ย้อน */
+var histTrap=false, ignorePop=0;
+function armHist(){
+  if(histTrap) return;
+  try{ history.pushState({bmed:1},''); histTrap=true; }catch(e){}
+}
+function consumeHist(){
+  if(!histTrap) return;
+  histTrap=false; ignorePop++;
+  try{ history.back(); }catch(e){ ignorePop--; }
+}
+window.addEventListener('popstate',function(){
+  if(ignorePop>0){ ignorePop--; return; }
+  histTrap=false;
+  if(!S.navStack.length) return;          /* ไม่มีหน้าให้ย้อนแล้ว → ปล่อยเบราว์เซอร์ออกไปตามปกติ */
+  if(S.view==='form') S.form=null;
+  doBack();
+  if(S.navStack.length) armHist();
+});
+
+function go(view,extra){
+  S.navStack.push({view:S.view, selId:S.selId, selPerson:S.selPerson});
+  if(S.navStack.length>20) S.navStack.shift();
+  S.view=view; S.dd=false;
+  if(extra){ for(var k in extra) S[k]=extra[k]; }
+  if(view==='form' && !S.form) S.form=blankForm();
+  render(true);
+  armHist();
+}
+function openForm(){                        /* ฟอร์ม = หน้าลึก → push แล้ว ✕ กลับที่เดิม */
+  if(S.view==='form') return;
+  S.navStack.push({view:S.view, selId:S.selId, selPerson:S.selPerson});
+  if(S.navStack.length>20) S.navStack.shift();
+  S.view='form'; S.dd=false; S.form=blankForm();
+  render(true);
+  armHist();
+}
+function navTo(view){                       /* เมนูหลัก = reset stack */
+  if(view==='form'){ 
+    if(S.view==='form' && S.form && S.form.dirty){ toast('กรอกฟอร์มค้างอยู่'); return; }
+    openForm(); return;
+  }
+  if(S.view==='form' && S.form && S.form.dirty){
+    confirmLeave(function(){ S.form=null; S.navStack=[]; S.view=view; S.dd=false; render(true); consumeHist(); });
+    return;
+  }
+  S.navStack=[]; S.view=view; S.dd=false;
+  render(true);
+  consumeHist();
+}
+function back(){
+  if(S.view==='form' && S.form && S.form.dirty){
+    confirmLeave(function(){ S.form=null; popView(); });
+    return;
+  }
+  if(S.view==='form') S.form=null;
+  popView();
+}
+function popView(){
+  doBack();
+  if(!S.navStack.length) consumeHist();
+}
+function doBack(){
+  var prev=S.navStack.pop();
+  if(!prev) prev={view:'home', selId:null, selPerson:null};
+  S.view=prev.view; S.selId=prev.selId; S.selPerson=prev.selPerson; S.dd=false;
+  render(true);
+}
+function confirmLeave(fn){
+  openModal({
+    title:'ออกจากฟอร์ม?',
+    sub:'ข้อมูลที่กรอกไว้จะไม่ถูกบันทึก',
+    okText:'ออกเลย', cancelText:'กรอกต่อ',
+    onOk:function(){ closeModal(); fn(); }
+  });
+}
+
+/* ── share text ────────────────────────────────────────────── */
+function shareText(meds){
+  var lines=['รายการยา — จัดยาโดยพญาบี ('+fmtTh(todayIso())+')',''];
+  meds.forEach(function(m){
+    var d=daysLeft(m);
+    lines.push('• '+m.name+' — '+m.person);
+    lines.push('  มื้อ: '+mealsText(m)+' ครั้งละ '+(m.dose||1)+' '+unitOf(m));
+    lines.push('  คงเหลือ '+remainText(m)+(d!=null
+      ? ' · หมดประมาณ '+fmtTh(outIso(m))+' · เตือนเติม '+fmtTh(refillIso(m)) : ''));
+    if(m.note) lines.push('  โน้ต: '+m.note);
+    lines.push('');
+  });
+  return lines.join('\n');
+}
+function share(meds){
+  if(!meds || !meds.length){ toast('ยังไม่มีรายการยาให้ส่ง'); return; }
+  var text=shareText(meds);
+  if(S.desktop){
+    var done=function(){ toast('คัดลอกรายละเอียดยาแล้ว — วางได้เลย'); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done,function(){ fallbackCopy(text); done(); });
+    } else { fallbackCopy(text); done(); }
+  }else{
+    toast('เปิด LINE เพื่อส่งรายละเอียดยา…');
+    var url='https://line.me/R/share?text='+encodeURIComponent(text);
+    setTimeout(function(){ window.open(url,'_blank','noopener'); },400);
+  }
+}
+function fallbackCopy(text){
+  try{
+    var ta=document.createElement('textarea');
+    ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+  }catch(e){}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDER
+   ══════════════════════════════════════════════════════════════ */
+function render(resetScroll){
+  var d=S.desktop;
+  var body='';
+  if(d) body+=sidebarHtml();
+  body+='<div class="content"><div class="wrap">'+viewHtml()+'</div></div>';
+  el('app').className='shell';
+  el('app').innerHTML=body+(d?'':tabbarHtml());
+  if(resetScroll) window.scrollTo(0,0);
+  afterRender();
+}
+
+function viewHtml(){
+  switch(S.view){
+    case 'home':    return S.desktop ? dashHtml() : mobileHomeHtml();
+    case 'detail':  return detailHtml();
+    case 'form':    return formHtml();
+    case 'alerts':  return alertsHtml();
+    case 'person':  return personHtml();
+    case 'history': return historyHtml();
+    case 'summary': return summaryHtml();
+    case 'print':   return printHtml();
+  }
+  return '';
+}
+
+/* ── sidebar ───────────────────────────────────────────────── */
+var NAV=[ {v:'home',label:'⌂ หน้าหลัก'}, {v:'history',label:'↺ ประวัติรับยา'},
+          {v:'summary',label:'▤ สรุปทั้งบ้าน'}, {v:'print',label:'⎙ พิมพ์ / PDF'} ];
+
+function sidebarHtml(){
+  var h='<div class="sidebar no-print"><div class="logo">✚ จัดยาโดยพญาบี</div>';
+  NAV.forEach(function(n){
+    var on = S.view===n.v || (n.v==='home' && (S.view==='detail'||S.view==='alerts'||S.view==='person'||S.view==='form'));
+    h+='<button class="nav-item'+(on?' on':'')+'" data-act="nav" data-v="'+n.v+'">'+esc(n.label)+'</button>';
+  });
+  h+='<div class="side-label">สมาชิก</div>';
+  if(!S.people.length) h+='<div class="side-add" style="cursor:default">ยังไม่มีสมาชิก</div>';
+  S.people.forEach(function(p){
+    var pm=medsOf(p.char), warn=pm.some(isWarn);
+    h+='<button class="side-person'+(warn?' warn':'')+'" data-act="person" data-ch="'+esc(p.char)+'">'+
+         avatar(p.char,30,{border:warn?'2px solid '+'#FBD38D':''})+
+         '<span class="nm">'+esc(personLabel(p))+' · '+(warn?'ใกล้หมด':pm.length+' ยา')+'</span></button>';
+  });
+  h+='<button class="side-add" data-act="addPerson">＋ เพิ่มคน</button>';
+  h+='<button class="side-cta" data-act="nav" data-v="form">＋ เพิ่มยา</button>';
+  h+='<div class="side-ver">'+VERSION+'<br>'+syncHtml()+'</div>';
+  return h+'</div>';
+}
+
+/* ── bottom tabs ───────────────────────────────────────────── */
+function tabbarHtml(){
+  var items=[{ic:'⌂',label:'หน้าหลัก',v:'home'},{ic:'↺',label:'ประวัติ',v:'history'},
+             {fab:true,v:'form'},{ic:'▤',label:'สรุปบ้าน',v:'summary'},{ic:'⎙',label:'พิมพ์',v:'print'}];
+  var h='<div class="tabbar no-print">';
+  items.forEach(function(t){
+    if(t.fab){ h+='<button class="fab" data-act="nav" data-v="form" aria-label="เพิ่มยา">＋</button>'; return; }
+    var on = S.view===t.v || (t.v==='home' && (S.view==='detail'||S.view==='alerts'||S.view==='person'));
+    h+='<button class="tb'+(on?' on':'')+'" data-act="nav" data-v="'+t.v+'">'+
+       '<div class="ic">'+t.ic+'</div>'+esc(t.label)+'</button>';
+  });
+  return h+'</div>';
+}
+
+/* ── hero / care / empty ───────────────────────────────────── */
+function heroKicker(){
+  var due=0, left=0;
+  S.meds.forEach(function(m){
+    if(m.freq!=='daily') return;
+    (m.meals||[]).forEach(function(ml){ due++; if(!S.taken[m.id+'-'+ml]) left++; });
+  });
+  if(!due)  return 'ยังไม่มียาที่ต้องกินประจำ';
+  if(!left) return 'ติ๊กครบทุกมื้อแล้ววันนี้';
+  return 'วันนี้ยังไม่ได้ติ๊ก ' + left + ' มื้อ จาก ' + due + ' มื้อ';
+}
+function heroHtml(mobile){
+  return '<div class="hero '+(mobile?'mob':'desk')+'">'+
+    imgTag(IMG.hero,'กล่องจัดยาประจำวัน')+
+    '<div class="scrim"></div><div class="inner">'+
+      '<div class="kicker">'+esc(heroKicker())+'</div>'+
+      '<h2>'+(mobile?'จัดยาโดยพญาบี':'ภาพรวมยาของบ้าน')+'</h2>'+
+      '<p>เช็คมื้อยา · นับเม็ดคงเหลือ · เตือนก่อนยาหมด</p>'+
+    '</div></div>';
+}
+function careHtml(){
+  return '<div class="care no-print"><div class="ph">'+imgTag(IMG.care,'มือผู้สูงอายุ')+'</div>'+
+    '<div class="tx"><b>ติ๊กมื้อยาทุกวัน</b>แอปจะตัดจำนวนคงเหลือให้เอง แล้วเตือนล่วงหน้าก่อนยาหมดตามจำนวนวันที่ตั้งไว้</div></div>';
+}
+function emptyHtml(){
+  return '<div class="empty"><div class="ph">'+imgTag(IMG.empty,'แผงยา')+'</div>'+
+    '<div class="tx"><b>ยังไม่มีรายการยา</b><p>เพิ่มยาตัวแรกของบ้าน แล้วแอปจะคำนวณวันหมดและวันที่ต้องสั่งเพิ่มให้เอง</p>'+
+    '<button class="btn btn-teal" data-act="nav" data-v="form" style="max-width:260px;margin:0 auto">＋ เพิ่มยา</button></div></div>';
+}
+
+/* ── alert bar ─────────────────────────────────────────────── */
+function alertText(){
+  return alertMeds().map(function(m){
+    return m.name+' ของ '+m.person+' เหลือ '+daysLeft(m)+' วัน — สั่งเพิ่มภายใน '+fmtTh(outIso(m));
+  }).join(' · ');
+}
+function alertBarHtml(mobile){
+  var a=alertMeds(); if(!a.length) return '';
+  if(mobile){
+    return '<div class="alert-bar" style="margin-top:var(--sp-4);border-radius:var(--r-xl);padding:14px 16px;'+
+      'display:flex;gap:var(--sp-3);align-items:flex-start">'+
+      '<i style="width:8px;height:8px;border-radius:50%;background:var(--amber);margin-top:6px;flex:none"></i>'+
+      '<div style="font-size:var(--fs-base);line-height:1.45"><b>ยาใกล้หมด '+a.length+' รายการ</b><br>'+esc(alertText())+'</div></div>';
+  }
+  return '<div class="alert-bar" style="margin-top:14px"><b>ยาใกล้หมด '+a.length+' รายการ</b> — '+esc(alertText())+'</div>';
+}
+
+/* ── dashboard (desktop) ───────────────────────────────────── */
+function dashHtml(){
+  var a=alertMeds(), list=sortedMeds();
+  var h='<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:var(--sp-2)">'+
+    '<div><div style="font-size:13.5px;color:var(--text-2)">'+esc(todayLabel())+'</div>'+
+    '<div style="font-size:var(--fs-2xl);font-weight:700">ภาพรวมยาของบ้าน</div></div>'+
+    '<button class="btn btn-line no-print" data-act="shareAll">ส่งรายละเอียดยา</button></div>';
+
+  h+='<div style="margin-top:14px">'+heroHtml(false)+'</div>';
+  h+=alertBarHtml(false);
+
+  /* stat cards */
+  var next=list.filter(function(m){ return daysLeft(m)!=null; })[0];
+  h+='<div class="stats" style="margin-top:var(--sp-4)">'+
+     '<div class="stat"><div class="lb">ยาที่ใช้อยู่</div><div class="vl">'+list.length+'</div>'+
+       '<div class="sb">'+S.people.length+' สมาชิก</div></div>'+
+     (a.length
+       ? '<button class="stat hot" data-act="go" data-v="alerts">'+
+           '<div class="lb">ต้องสั่งเพิ่ม</div><div class="vl">'+a.length+'</div>'+
+           '<div class="sb">'+esc(a[0].name+' · ก่อน '+fmtTh(outIso(a[0])))+'</div></button>'
+       : '<div class="stat"><div class="lb">ต้องสั่งเพิ่ม</div><div class="vl">0</div>'+
+           '<div class="sb">ไม่มี</div></div>')+
+     '<div class="stat"><div class="lb">เติมยาครั้งถัดไป</div>'+
+       '<div class="vl" style="font-size:22px;color:var(--text)">'+esc(next?fmtTh(outIso(next)):'—')+'</div>'+
+       '<div class="sb">'+esc(next?next.name+' · '+next.person:'ยังไม่มีข้อมูล')+'</div></div></div>';
+
+  if(!list.length) return h+'<div style="margin-top:var(--sp-4)">'+emptyHtml()+'</div>';
+
+  /* table + right column */
+  h+='<div style="margin-top:var(--sp-4);display:grid;grid-template-columns:1.6fr 1fr;gap:var(--sp-4);align-items:start">';
+  h+='<div class="card" style="min-width:0"><div class="h-title">ยาทั้งหมด</div>'+
+     '<div class="tbl-head" style="margin-top:var(--sp-3)"><span>ยา</span><span>ผู้ใช้</span>'+
+     '<span>มื้อยา</span><span>คงเหลือ</span><span>หมดใน</span></div>';
+  list.forEach(function(m){
+    var w=isWarn(m);
+    h+='<button class="tbl-row'+(w?' warn':'')+'" data-act="open" data-id="'+esc(m.id)+'">'+
+       '<b class="one" title="'+esc(m.name)+'">'+esc(m.name)+'</b>'+
+       avatar(m.person,28,{bg:w?'#fff':'var(--teal-soft)',fg:w?'#B45309':'#0F766E',border:w?'2px solid #B45309':'',fs:12})+
+       '<span class="muted" style="font-size:var(--fs-cap)" title="'+esc(mealsText(m))+'">'+esc(mealsText(m))+'</span>'+
+       '<span>'+esc(remainText(m))+'</span>'+
+       '<b style="color:'+(w?'var(--amber)':'var(--teal)')+'">'+esc(daysText(m))+'</b></button>';
+  });
+  h+='</div>';
+
+  h+='<div style="display:flex;flex-direction:column;gap:var(--sp-4);min-width:0">'+
+       refillCardHtml()+todayCardHtml()+careHtml()+'</div></div>';
+  return h;
+}
+
+function refillCardHtml(){
+  var rows=sortedMeds().filter(function(m){ return daysLeft(m)!=null; }).slice(0,4);
+  var h='<div class="card"><div class="h-title">กำหนดเติมยา</div>'+
+        '<div style="margin-top:var(--sp-3);display:flex;flex-direction:column;gap:var(--sp-3)">';
+  if(!rows.length) h+='<div class="muted" style="font-size:13.5px">ยังไม่มียาที่คำนวณวันหมดได้</div>';
+  rows.forEach(function(m){
+    var iso=outIso(m), d=parseIso(iso), hot=isWarn(m);
+    h+='<div class="refill"><div class="dt'+(hot?' hot':'')+'" style="color:'+(hot?'var(--amber)':'var(--text)')+'">'+
+       '<div class="d">'+d.getDate()+'</div><div class="m">'+TH_MON[d.getMonth()]+'</div></div>'+
+       '<div class="tx"><b class="one">'+esc(m.name+' — '+m.person)+'</b><br><span class="muted">'+
+       esc(hot ? 'สั่งเพิ่มเลย · เหลือ '+remainText(m)
+               : 'เตือน '+fmtTh(refillIso(m))+' (ล่วงหน้า '+(m.lead||7)+' วัน)')+'</span></div></div>';
+  });
+  return h+'</div></div>';
+}
+
+/* การ์ดติ๊กมื้อยาวันนี้ — ใช้ร่วมกันทั้ง desktop และ mobile */
+function todayCardHtml(){
+  return '<div class="card no-print"><div class="h-title">มื้อยาวันนี้</div>'+mealBlockHtml()+'</div>';
+}
+function mealBlockHtml(){
+  var meal=S.mealTab||currentMeal();
+  var h='<div class="meal-tabs">';
+  MEALS.forEach(function(ml){
+    var n=S.meds.filter(function(m){ return m.freq==='daily' && (m.meals||[]).indexOf(ml)>=0; }).length;
+    h+='<button class="meal-tab'+(ml===meal?' on':'')+'" data-act="meal" data-m="'+esc(ml)+'">'+
+       esc(ml)+(n?'<span class="n">'+n+'</span>':'')+'</button>';
+  });
+  h+='</div>';
+
+  var list=S.meds.filter(function(m){ return m.freq==='daily' && (m.meals||[]).indexOf(meal)>=0; }).sort(byUrgency);
+  h+='<div style="margin-top:var(--sp-3);display:flex;flex-direction:column;gap:var(--sp-2)">';
+  if(!list.length){
+    h+='<div class="muted" style="font-size:13.5px;padding:var(--sp-2) 0">ไม่มียามื้อ'+esc(meal)+'</div>';
+  }
+  list.forEach(function(m){
+    var k=m.id+'-'+meal, on=!!S.taken[k], w=isWarn(m);
+    h+='<div class="row-card" data-act="toggle" data-id="'+esc(m.id)+'" data-m="'+esc(meal)+'">'+
+       '<div class="chk'+(on?' on':'')+'">'+(on?'✓':'')+'</div>'+
+       '<div class="bd"><div class="t1 one">'+esc(m.name)+' · '+(m.dose||1)+' '+esc(unitOf(m))+'</div>'+
+       '<div class="t2 one">'+esc(m.person)+' · เหลือ '+esc(remainText(m))+'</div></div>'+
+       (w?'<div class="badge-warn">เหลือ '+daysLeft(m)+' วัน</div>':'')+'</div>';
+  });
+  return h+'</div>';
+}
+
+/* ── mobile home ───────────────────────────────────────────── */
+function mobileHomeHtml(){
+  var list=sortedMeds();
+  var h='<div class="narrow">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:var(--sp-2)">'+
+     '<div style="min-width:0"><div style="font-size:var(--fs-cap);color:var(--text-2)" class="one">'+esc(todayLabel())+'</div>'+
+     '<div style="font-size:26px;font-weight:700;line-height:1.2">จัดยาโดยพญาบี</div></div>'+
+     '<button class="icon-btn no-print" data-act="nav" data-v="print" aria-label="พิมพ์">⎙</button></div>';
+
+  h+='<div style="margin-top:14px">'+heroHtml(true)+'</div>';
+  h+=alertBarHtml(true);
+
+  /* people */
+  h+='<div class="people-strip">';
+  S.people.forEach(function(p){
+    var pm=medsOf(p.char), warn=pm.some(isWarn);
+    h+='<button class="p-cell" data-act="person" data-ch="'+esc(p.char)+'">'+
+       avatar(p.char,52,{border:warn?'2px solid #B45309':''})+
+       '<div class="sub'+(warn?' warn':'')+'">'+esc(warn?'ใกล้หมด':pm.length+' ยา')+'</div></button>';
+  });
+  h+='<button class="p-cell" data-act="addPerson"><div class="p-dash">＋</div><div class="sub">เพิ่มคน</div></button></div>';
+
+  /* today */
+  h+='<div class="sec-label">มื้อยาวันนี้</div>'+mealBlockHtml();
+
+  /* all meds */
+  h+='<div class="sec-label">ยาทั้งหมด ('+list.length+')</div>';
+  if(!list.length) return h+'<div style="margin-top:var(--sp-3)">'+emptyHtml()+'</div></div>';
+  h+='<div style="margin-top:var(--sp-3);display:flex;flex-direction:column;gap:var(--sp-2)">';
+  list.forEach(function(m){
+    var w=isWarn(m);
+    h+='<button class="row-card" data-act="open" data-id="'+esc(m.id)+'">'+
+       (m.photo_url
+          ? '<span class="av sq" style="width:40px;height:40px;padding:0;overflow:hidden">'+imgTag(m.photo_url,m.name)+'</span>'
+          : avatar(m.person,40,{square:true,bg:'var(--teal-soft)',fg:'#0F766E'}))+
+       '<div class="bd"><div class="t1 one">'+esc(m.name)+'</div>'+
+       '<div class="t2 one">'+esc(mealsText(m))+' — เหลือ '+esc(remainText(m))+'</div></div>'+
+       '<div class="rt'+(w?' warn':'')+'">'+esc(daysText(m))+'</div></button>';
+  });
+  h+='</div>';
+  h+='<div style="margin-top:var(--sp-5)">'+careHtml()+'</div>';
+  return h+'</div>';
+}
+
+/* ── detail ────────────────────────────────────────────────── */
+function detailHtml(){
+  var m=S.meds.filter(function(x){ return String(x.id)===String(S.selId); })[0];
+  if(!m) return '<div class="mid">'+pageHead('รายละเอียดยา')+
+    '<div class="card" style="margin-top:var(--sp-4)">ไม่พบยานี้แล้ว (อาจถูกลบไป)</div></div>';
+
+  var d=daysLeft(m), pct=Math.round(100*(m.remaining||0)/Math.max(m.qty||1,1));
+  var h='<div class="narrow">'+pageHead('รายละเอียดยา');
+
+  h+='<div class="card r20" style="margin-top:var(--sp-4);padding:18px"><div style="display:flex;gap:14px">'+
+     '<button class="med-photo" data-act="photoMed" data-id="'+esc(m.id)+'" title="แตะเพื่อเปลี่ยนรูปฉลากยา">'+
+       (m.photo_url ? imgTag(m.photo_url,'ฉลาก '+m.name) : 'รูป<br>ฉลากยา')+'</button>'+
+     '<div style="min-width:0"><div style="font-size:var(--fs-xl);font-weight:700;line-height:1.25">'+esc(m.name)+'</div>'+
+     '<div style="margin-top:var(--sp-1);display:flex;gap:var(--sp-1);flex-wrap:wrap">'+
+       '<span class="chip person">'+esc(m.person)+'</span>'+
+       (m.tag?'<span class="chip tag">'+esc(m.tag)+'</span>':'')+'</div></div></div>';
+
+  h+='<div style="margin-top:var(--sp-4);display:flex;gap:var(--sp-2)">';
+  if(m.freq==='daily'){
+    MEALS.forEach(function(ml){
+      var on=(m.meals||[]).indexOf(ml)>=0;
+      h+='<span class="meal-chip'+(on?' on':'')+'">'+esc(on?ml+' ✓':ml)+'</span>';
+    });
+  }else{
+    h+='<span class="meal-chip on">'+esc(mealsText(m))+'</span>';
+  }
+  h+='</div><div style="margin-top:var(--sp-2);font-size:var(--fs-cap);color:var(--text-2);text-align:center">'+
+     esc(m.freq==='daily' ? 'ครั้งละ '+(m.dose||1)+' '+unitOf(m)+' · รวม '+perDay(m)+' '+unitOf(m)+'/วัน'
+        : m.freq==='weekly' ? 'ครั้งละ '+(m.dose||1)+' '+unitOf(m)+' · สัปดาห์ละครั้ง' : 'ใช้เมื่อมีอาการ')+
+     '</div></div>';
+
+  h+='<div class="card r20" style="margin-top:var(--sp-3);padding:18px">'+
+     '<div style="display:flex;justify-content:space-between;font-size:var(--fs-base)">'+
+       '<span class="muted">คงเหลือ</span><b>'+(m.remaining||0)+' / '+(m.qty||0)+' '+esc(unitOf(m))+'</b></div>'+
+     '<div class="bar"><i style="width:'+Math.max(0,Math.min(100,pct))+'%"></i></div>'+
+     '<div style="margin-top:var(--sp-2);display:flex;justify-content:space-between;font-size:var(--fs-cap);'+
+       'color:var(--text-2);flex-wrap:wrap;gap:4px">'+
+       '<span>หมดประมาณ <b style="color:var(--text)">'+esc(d==null?'—':fmtTh(outIso(m)))+'</b></span>'+
+       '<span style="color:var(--amber);font-weight:600">เตือนเติม '+esc(d==null?'—':fmtTh(refillIso(m)))+'</span></div></div>';
+
+  var last=(m.history||[])[0];
+  h+='<div class="card r20" style="margin-top:var(--sp-3);padding:var(--sp-1) 18px">'+
+     '<div class="kv"><span class="muted">เริ่มใช้</span><b>'+esc(fmtTh(m.start))+'</b></div>'+
+     '<div class="kv"><span class="muted">รับยาล่าสุด</span><b class="one" style="text-align:right">'+
+       esc(last?fmtTh(last.date)+' · '+(last.place||'—'):'—')+'</b></div>'+
+     '<div style="padding:var(--sp-3) 0;font-size:var(--fs-base)"><span class="muted">โน้ต</span>'+
+       '<div class="note-box">'+esc(m.note||'—')+'</div></div></div>';
+
+  h+='<div style="margin-top:var(--sp-3);display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2)">'+
+     '<span style="font-size:var(--fs-cap);font-weight:600;color:var(--text-2)">ประวัติรับยา</span>'+
+     '<button class="btn btn-ghost no-print" data-act="receive" data-id="'+esc(m.id)+'">＋ บันทึกรับยาเพิ่ม</button></div>';
+  h+='<div style="margin-top:var(--sp-2);display:flex;flex-direction:column;gap:var(--sp-1)">';
+  if(!(m.history||[]).length) h+='<div class="muted" style="font-size:var(--fs-cap)">ยังไม่มีประวัติ</div>';
+  (m.history||[]).forEach(function(x){
+    h+='<div class="hist-row"><span class="one">'+esc(fmtTh(x.date)+' · '+x.qty+' '+unitOf(m))+'</span>'+
+       '<span class="muted one" style="text-align:right">'+esc(x.place||'—')+'</span></div>';
+  });
+  h+='</div>';
+
+  h+='<div style="margin-top:var(--sp-4)" class="no-print">'+
+     '<button class="btn btn-line block" data-act="shareOne" data-id="'+esc(m.id)+'">ส่งรายละเอียดยา</button>'+
+     '<div style="margin-top:var(--sp-1);text-align:center;font-size:var(--fs-sm);color:var(--text-2)">'+
+     'มือถือ: ส่งทาง LINE · คอม: คัดลอกให้อัตโนมัติ</div></div>';
+  return h+'</div>';
+}
+
+function pageHead(title,closeIcon){
+  return '<div class="page-head"><button class="icon-btn no-print" data-act="back" aria-label="กลับ">'+
+         (closeIcon||'‹')+'</button><div class="t one">'+esc(title)+'</div></div>';
+}
+
+/* ── alerts ────────────────────────────────────────────────── */
+function alertsHtml(){
+  var a=alertMeds();
+  var h='<div class="mid">'+pageHead('ต้องสั่งเพิ่ม ('+a.length+')');
+  h+='<div style="margin-top:var(--sp-4);display:flex;flex-direction:column;gap:var(--sp-2)">';
+  if(!a.length) h+='<div class="card">ตอนนี้ยังไม่มียาที่ใกล้หมด</div>';
+  a.forEach(function(m){
+    h+='<button class="card" data-act="open" data-id="'+esc(m.id)+'" '+
+       'style="border:1.5px solid var(--amber-line);border-radius:18px;padding:var(--sp-4) 18px;cursor:pointer;text-align:left;width:100%">'+
+       '<div style="display:flex;justify-content:space-between;gap:var(--sp-2);align-items:baseline">'+
+         '<b class="one" style="font-size:var(--fs-lg)">'+esc(m.name+' — '+m.person)+'</b>'+
+         '<b style="font-size:13.5px;color:var(--amber);flex:none">เหลือ '+daysLeft(m)+' วัน</b></div>'+
+       '<div class="muted one" style="margin-top:4px;font-size:13.5px">'+
+         esc(mealsText(m)+' · เหลือ '+remainText(m)+' · หมดประมาณ '+fmtTh(outIso(m)))+'</div>'+
+       '<div style="margin-top:var(--sp-2);font-size:13.5px;font-weight:600;color:var(--amber);'+
+         'background:var(--amber-bg);border-radius:var(--r-sm);padding:var(--sp-2) var(--sp-3)">'+
+         'สั่งเพิ่มภายใน '+esc(fmtTh(outIso(m)))+'</div></button>';
+  });
+  h+='</div>';
+  if(a.length) h+='<button class="btn btn-line block no-print" style="margin-top:var(--sp-4)" data-act="shareAlerts">ส่งรายการที่ต้องสั่งเพิ่ม</button>';
+  return h+'</div>';
+}
+
+/* ── person ────────────────────────────────────────────────── */
+function personHtml(){
+  var ch=S.selPerson;
+  var p=S.people.filter(function(x){ return x.char===ch; })[0];
+  if(!p) return '<div class="mid">'+pageHead('โปรไฟล์สมาชิก')+
+    '<div class="card" style="margin-top:var(--sp-4)">ไม่พบสมาชิกคนนี้</div></div>';
+
+  var list=medsOf(ch), warn=list.filter(isWarn);
+  var h='<div class="mid">'+pageHead('โปรไฟล์สมาชิก');
+  h+='<div class="card r20" style="margin-top:var(--sp-4);display:flex;align-items:center;gap:var(--sp-4)">'+
+     avatar(ch,64)+
+     '<div style="flex:1;min-width:0"><div style="font-size:var(--fs-xl);font-weight:700" class="one">คุณ '+esc(personLabel(p))+'</div>'+
+     '<div class="muted one" style="font-size:13.5px">'+list.length+' รายการยา'+
+       (warn.length?' · ใกล้หมด '+warn.length+' รายการ':'')+'</div></div>'+
+     '<button class="btn btn-line no-print" data-act="sharePerson" data-ch="'+esc(ch)+'" '+
+       'style="border-radius:var(--r-md);flex:none">ส่งรายละเอียดยา</button></div>';
+
+  if(warn.length){
+    h+='<div class="alert-bar" style="margin-top:var(--sp-3);border-radius:var(--r-xl);padding:var(--sp-3) var(--sp-4);font-size:var(--fs-base)">'+
+       esc(warn.map(function(m){
+         return m.name+' เหลือ '+daysLeft(m)+' วัน — สั่งเพิ่มภายใน '+fmtTh(outIso(m));
+       }).join(' · '))+'</div>';
+  }
+
+  h+='<div class="sec-label">ยาของคุณ '+esc(personLabel(p))+' ('+list.length+')</div>';
+  h+='<div style="margin-top:var(--sp-3);display:flex;flex-direction:column;gap:var(--sp-2)">';
+  if(!list.length) h+='<div class="card muted">ยังไม่มียาของคนนี้</div>';
+  list.forEach(function(m){
+    var w=isWarn(m);
+    h+='<button class="card" data-act="open" data-id="'+esc(m.id)+'" '+
+       'style="padding:14px var(--sp-4);text-align:left;width:100%;cursor:pointer">'+
+       '<div style="display:flex;justify-content:space-between;gap:var(--sp-2);align-items:baseline">'+
+       '<b class="one" style="font-size:15.5px">'+esc(m.name)+'</b>'+
+       '<b style="font-size:var(--fs-cap);color:'+(w?'var(--amber)':'var(--teal)')+';flex:none">'+esc(daysText(m))+'</b></div>'+
+       '<div class="muted one" style="margin-top:4px;font-size:var(--fs-cap)">'+
+       esc(mealsText(m)+' · เหลือ '+remainText(m)+' · หมดประมาณ '+(daysLeft(m)==null?'—':fmtTh(outIso(m))))+'</div></button>';
+  });
+  return h+'</div></div>';
+}
+
+/* ── history ───────────────────────────────────────────────── */
+function historyHtml(){
+  var rows=[];
+  S.meds.forEach(function(m){
+    (m.history||[]).forEach(function(x){
+      rows.push({date:x.date, qty:x.qty, place:x.place, med:m.name, person:m.person, unit:unitOf(m)});
+    });
+  });
+  rows.sort(function(a,b){ return String(b.date).localeCompare(String(a.date)); });   /* ล่าสุดอยู่บน */
+
+  var h='<div class="mid"><div style="font-size:22px;font-weight:700">ประวัติรับยา</div>'+
+        '<div style="margin-top:14px;display:flex;flex-direction:column;gap:var(--sp-2)">';
+  if(!rows.length) h+='<div class="card muted">ยังไม่มีประวัติรับยา</div>';
+  rows.forEach(function(r){
+    h+='<div class="card" style="padding:14px var(--sp-4);display:flex;align-items:center;gap:var(--sp-3)">'+
+       avatar(r.person,38,{bg:'var(--teal-soft)',fg:'#0F766E'})+
+       '<div style="flex:1;min-width:0"><div class="one" style="font-size:var(--fs-md);font-weight:600">'+
+         esc(r.med+' · '+r.qty+' '+r.unit)+'</div>'+
+       '<div class="muted one" style="font-size:var(--fs-cap)">'+esc(r.place||'—')+'</div></div>'+
+       '<div class="muted" style="font-size:var(--fs-cap);flex:none">'+esc(fmtTh(r.date))+'</div></div>';
+  });
+  return h+'</div></div>';
+}
+
+/* ── summary ───────────────────────────────────────────────── */
+function summaryHtml(){
+  var h='<div class="wide"><div style="font-size:22px;font-weight:700">สรุปยาทั้งบ้าน</div>'+
+        '<div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">';
+  if(!S.people.length) h+='<div class="card muted">ยังไม่มีสมาชิก</div>';
+  S.people.forEach(function(p){
+    var list=medsOf(p.char);
+    h+='<div class="card" style="border-radius:18px;padding:18px">'+
+       '<div style="display:flex;align-items:center;gap:var(--sp-2);min-width:0">'+avatar(p.char,40)+
+       '<b class="one" style="font-size:var(--fs-lg)">คุณ '+esc(personLabel(p))+'</b></div>'+
+       '<div style="margin-top:var(--sp-3);display:flex;flex-direction:column;gap:var(--sp-2)">';
+    if(!list.length) h+='<div class="muted" style="font-size:var(--fs-base)">ยังไม่มียา</div>';
+    list.forEach(function(m){
+      var w=isWarn(m);
+      h+='<div style="display:flex;justify-content:space-between;font-size:var(--fs-base);'+
+         'border-bottom:1px solid var(--line-soft);padding-bottom:var(--sp-2);gap:var(--sp-2)">'+
+         '<span class="one"><b>'+esc(m.name)+'</b> <span class="muted">· '+esc(mealsText(m))+'</span></span>'+
+         '<b style="color:'+(w?'var(--amber)':'var(--teal)')+';flex:none">'+esc(daysLeft(m)==null?'—':daysLeft(m)+' วัน')+'</b></div>';
+    });
+    h+='</div></div>';
+  });
+  return h+'</div></div>';
+}
+
+/* ── print ─────────────────────────────────────────────────── */
+function printHtml(){
+  var list=sortedMeds();
+  var h='<div class="wide">'+
+    '<div class="no-print" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--sp-2)">'+
+      '<div style="font-size:22px;font-weight:700">พิมพ์ / ส่งรายการยา</div>'+
+      '<div style="display:flex;gap:var(--sp-2)">'+
+        '<button class="btn btn-ghost" data-act="print">⎙ พิมพ์</button>'+
+        '<button class="btn btn-line" data-act="shareAll">ส่งรายละเอียดยา</button></div></div>';
+  h+='<div class="card" style="margin-top:14px;padding:26px">'+
+     '<div style="font-size:18px;font-weight:700">รายการยาประจำบ้าน · '+esc(todayLabel())+'</div>'+
+     '<div class="tbl-head" style="margin-top:14px;grid-template-columns:1.8fr .6fr 1.4fr 1fr 1.2fr">'+
+     '<span>ยา</span><span>ผู้ใช้</span><span>มื้อยา</span><span>คงเหลือ</span><span>หมดประมาณ</span></div>';
+  if(!list.length) h+='<div class="muted" style="padding:var(--sp-4) var(--sp-3)">ยังไม่มีรายการยา</div>';
+  list.forEach(function(m){
+    h+='<div class="tbl-row" style="grid-template-columns:1.8fr .6fr 1.4fr 1fr 1.2fr;cursor:default;font-size:13.5px">'+
+       '<b class="one">'+esc(m.name)+'</b><span class="one">'+esc(m.person)+'</span>'+
+       '<span class="muted one">'+esc(mealsText(m))+'</span><span>'+esc(remainText(m))+'</span>'+
+       '<span>'+esc(daysLeft(m)==null?'—':fmtTh(outIso(m)))+'</span></div>';
+  });
+  return h+'</div></div>';
+}
+
+/* ── form ──────────────────────────────────────────────────── */
+function formHtml(){
+  var f=S.form||(S.form=blankForm());
+  if(!f.person && S.people.length) f.person=S.people[0].char;
+
+  var h='<div class="narrow">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2)">'+
+    '<div style="font-size:20px;font-weight:700">เพิ่มยา</div>'+
+    '<button class="icon-btn" data-act="back" style="font-size:var(--fs-lg)" aria-label="ปิด">✕</button></div>';
+
+  /* ชื่อยา */
+  h+='<div class="lbl">ชื่อยา <i>*</i></div>';
+  if(f.newName){
+    h+='<div style="margin-top:var(--sp-2);display:flex;gap:var(--sp-2)">'+
+       '<input class="inp" id="f-name" value="'+esc(f.name)+'" placeholder="พิมพ์ชื่อยาใหม่…" '+
+       'style="border:1.5px solid var(--teal)" autocomplete="off">'+
+       '<button class="btn btn-ghost" data-act="pickMode" style="flex:none;border-radius:var(--r-lg)">เลือกจากรายการ</button></div>';
+  }else{
+    h+='<button class="dd-btn" id="f-dd" data-act="ddToggle" style="margin-top:var(--sp-2)">'+
+       '<span class="v" style="color:'+(f.name?'var(--text)':'var(--text-3)')+'">'+
+       esc(f.name||'เลือกจากยาเดิม หรือเพิ่มใหม่')+'</span><span style="color:var(--teal)">▾</span></button>';
+  }
+
+  /* ผู้ใช้ยา */
+  h+='<div class="lbl">ผู้ใช้ยา <i>*</i></div><div style="margin-top:var(--sp-2);display:flex;gap:var(--sp-2);flex-wrap:wrap">';
+  S.people.forEach(function(p){
+    var on=f.person===p.char;
+    h+='<button class="pav'+(on?' on':'')+'" data-act="pickPerson" data-ch="'+esc(p.char)+'" title="'+esc(personLabel(p))+'" '+
+       'style="'+(on?'':'background:'+personColor(p.char)+';color:#0F3B36;border-color:transparent')+
+       ';font-size:'+(String(p.char).length>2?12:15)+'px">'+esc(p.char)+'</button>';
+  });
+  h+='<button class="pav dash" data-act="addPerson" aria-label="เพิ่มคน">＋</button></div>';
+
+  /* มื้อยา */
+  h+='<div class="lbl">มื้อยา <i>*</i></div><div style="margin-top:var(--sp-2);display:flex;gap:var(--sp-2);flex-wrap:wrap">';
+  MEALS.forEach(function(ml){
+    var on=f.meals.indexOf(ml)>=0;
+    h+='<button class="pick'+(on?' on':'')+'" data-act="toggleMeal" data-m="'+esc(ml)+'">'+esc(ml)+'</button>';
+  });
+  h+='</div>';
+
+  /* ครั้งละ + จำนวนที่ได้รับ */
+  h+='<div style="margin-top:var(--sp-4);display:flex;gap:var(--sp-3)">'+
+     '<div style="flex:1;min-width:0"><div style="font-size:var(--fs-base);font-weight:600">ครั้งละ <i style="color:var(--req);font-style:normal">*</i></div>'+
+     '<div class="stepper" style="margin-top:var(--sp-2)">'+
+       '<button data-act="dose" data-d="-1" aria-label="ลด">−</button>'+
+       '<b>'+f.dose+' '+esc(unitOf({name:f.name}))+'</b>'+
+       '<button data-act="dose" data-d="1" aria-label="เพิ่ม">＋</button></div></div>'+
+     '<div style="flex:1;min-width:0"><div style="font-size:var(--fs-base);font-weight:600">จำนวนที่ได้รับ <i style="color:var(--req);font-style:normal">*</i></div>'+
+     '<div class="qty-box" style="margin-top:var(--sp-2)"><input id="f-qty" inputmode="numeric" value="'+esc(f.qty)+'">'+
+       '<span class="muted" style="font-size:var(--fs-base);padding-right:var(--sp-2)">'+esc(unitOf({name:f.name}))+'</span></div></div></div>';
+
+  /* วันเริ่มใช้ + เตือนล่วงหน้า */
+  h+='<div style="margin-top:var(--sp-4);display:flex;gap:var(--sp-3)">'+
+     '<div style="flex:1;min-width:0"><div style="font-size:var(--fs-base);font-weight:600">วันเริ่มใช้ <i style="color:var(--req);font-style:normal">*</i></div>'+
+     '<input class="inp h52" id="f-start" inputmode="numeric" placeholder="YYYY/MM/DD" '+
+       'value="'+esc(String(f.start||'').replace(/-/g,'/'))+'" style="margin-top:var(--sp-2)"></div>'+
+     '<div style="flex:1;min-width:0"><div style="font-size:var(--fs-base);font-weight:600">เตือนเติมล่วงหน้า <i style="color:var(--req);font-style:normal">*</i></div>'+
+     '<div style="margin-top:var(--sp-2);display:flex;gap:var(--sp-1)">';
+  [3,7,14].forEach(function(n){
+    h+='<button class="pick seg'+(f.lead===n?' on':'')+'" data-act="lead" data-n="'+n+'">'+n+' วัน</button>';
+  });
+  h+='</div></div></div>';
+
+  /* โน้ต */
+  h+='<div class="lbl">โน้ต</div>'+
+     '<textarea class="inp" id="f-note" placeholder="เช่น กินหลังอาหาร, ชื่อโรงพยาบาล…" style="margin-top:var(--sp-2)">'+
+     esc(f.note)+'</textarea>';
+
+  /* รูปฉลากยา */
+  if(f.photo){
+    h+='<div class="photo-prev"><img src="'+esc(f.photo)+'" alt="รูปฉลากยา">'+
+       '<div style="flex:1;min-width:0"><div class="one" style="font-size:var(--fs-base);font-weight:600">แนบรูปฉลากยาแล้ว</div>'+
+       '<div class="muted one" style="font-size:var(--fs-cap)">'+esc(f.photoName||'รูปจากกล้อง')+'</div></div>'+
+       '<button class="btn btn-ghost" data-act="photoClear" style="flex:none">ลบรูป</button></div>';
+  }else{
+    h+='<button class="drop-photo" data-act="photoPick">＋ ถ่ายรูปฉลากยา</button>';
+  }
+
+  h+='<button class="btn btn-teal" data-act="save" style="margin-top:var(--sp-5)"'+(S.saving?' disabled':'')+'>'+
+     (S.saving?'กำลังบันทึก…':'บันทึกยา')+'</button>';
+  h+='<div style="margin-top:var(--sp-2);text-align:center">'+syncHtml()+'</div>';
+  return h+'</div>';
+}
+
+/* dropdown ชื่อยา — render ที่ body (portal) กัน sticky/overflow ทับ */
+function openDd(){
+  closeDd();
+  var btn=el('f-dd'); if(!btn) return;
+  var names=[]; S.meds.forEach(function(m){ if(names.indexOf(m.name)<0) names.push(m.name); });
+  names.sort(function(a,b){ return a.localeCompare(b,'th'); });
+  var r=btn.getBoundingClientRect();
+  var box=document.createElement('div');
+  box.className='dd-list'; box.id='dd-list';
+  box.style.left=r.left+'px'; box.style.width=r.width+'px';
+  var below=window.innerHeight-r.bottom;
+  if(below<180 && r.top>below){ box.style.bottom=(window.innerHeight-r.top+6)+'px'; }
+  else { box.style.top=(r.bottom+6)+'px'; box.style.maxHeight=Math.max(140,below-16)+'px'; }
+  var h='';
+  names.forEach(function(n,i){
+    h+='<div class="dd-item" data-act="ddPick" data-n="'+esc(n)+'" data-i="'+i+'">'+esc(n)+'</div>';
+  });
+  if(!names.length) h+='<div class="dd-item muted" style="cursor:default">ยังไม่มียาในระบบ</div>';
+  h+='<div class="dd-item add" data-act="ddNew">＋ เพิ่มยาใหม่…</div>';
+  box.innerHTML=h;
+  el('layer').appendChild(box);
+  S.dd=true; S.ddHi=-1;
+}
+function closeDd(){
+  var b=el('dd-list'); if(b) b.parentNode.removeChild(b);
+  S.dd=false; S.ddHi=-1;
+}
+
+/* ── modal ─────────────────────────────────────────────────── */
+function openModal(cfg){
+  S.modal=cfg;
+  var h='<div class="mask" data-act="maskClose"><div class="modal" data-stop="1">'+
+    '<h3>'+esc(cfg.title)+'</h3>'+
+    (cfg.sub?'<p class="sub">'+esc(cfg.sub)+'</p>':'')+
+    (cfg.fields||[]).map(function(f){
+      return '<div class="lbl" style="margin-top:var(--sp-3)">'+esc(f.label)+(f.required?' <i>*</i>':'')+'</div>'+
+        '<input class="inp" id="m-'+esc(f.id)+'" value="'+esc(f.value||'')+'" placeholder="'+esc(f.ph||'')+'" '+
+        (f.numeric?'inputmode="numeric" ':'')+'style="margin-top:var(--sp-2)" autocomplete="off">';
+    }).join('')+
+    '<div class="acts"><button class="no" data-act="modalCancel">'+esc(cfg.cancelText||'ยกเลิก')+'</button>'+
+    '<button class="ok" data-act="modalOk">'+esc(cfg.okText||'บันทึก')+'</button></div></div></div>';
+  el('layer').innerHTML=h;
+  var first=el('layer').querySelector('.modal input');
+  if(first) setTimeout(function(){ first.focus(); },30);
+}
+function closeModal(){ S.modal=null; el('layer').innerHTML=''; }
+
+/* ══════════════════════════════════════════════════════════════
+   ACTIONS
+   ══════════════════════════════════════════════════════════════ */
+function findMed(id){ return S.meds.filter(function(m){ return String(m.id)===String(id); })[0]; }
+
+function toggleTaken(id,meal){
+  var m=findMed(id); if(!m) return;
+  var k=id+'-'+meal, want=!S.taken[k];
+  if(want && (m.remaining||0)<=0){ toast('ยาหมดแล้ว — บันทึกรับยาเพิ่มก่อนนะครับ'); return; }
+
+  S.taken[k]=want;
+  m.remaining = want ? Math.max(0,(m.remaining||0)-(m.dose||1)) : (m.remaining||0)+(m.dose||1);
+  saveCache(); render();
+
+  send({action:'setTaken', med_id:id, meal:meal, date:todayIso(), taken:want}).then(function(res){
+    if(res && res.ok && typeof res.remaining==='number'){
+      var mm=findMed(id);
+      if(mm && mm.remaining!==res.remaining){ mm.remaining=res.remaining; saveCache(); render(); }
+    }
+  });
+}
+
+function addPerson(){
+  openModal({
+    title:'เพิ่มสมาชิก', sub:'ชื่อที่จะแสดงบนวงกลม เช่น พ่อ / แม่ / ย่า',
+    fields:[{id:'char', label:'ชื่อที่แสดง', required:true, ph:'พ่อ'}],
+    okText:'เพิ่ม',
+    onOk:function(v){
+      var ch=String(v.char||'').trim().slice(0,8);
+      if(!ch){ toast('กรุณาใส่ชื่อสมาชิก'); return false; }
+      if(S.people.some(function(p){ return p.char===ch; })){ toast('มีสมาชิกชื่อนี้แล้ว'); return false; }
+      S.people.push({char:ch, name:ch, color_index:String(S.people.length%6)});
+      if(S.form) S.form.person=ch;
+      saveCache(); closeModal(); render();
+      toast('เพิ่มสมาชิก "'+ch+'" แล้ว');
+      send({action:'addPerson', char:ch, name:ch});
+      return true;
+    }
+  });
+}
+
+function receiveMed(id){
+  var m=findMed(id); if(!m) return;
+  openModal({
+    title:'บันทึกรับยาเพิ่ม', sub:m.name+' — '+m.person,
+    fields:[
+      {id:'qty',   label:'จำนวนที่รับ ('+unitOf(m)+')', required:true, numeric:true, value:String(m.qty||30)},
+      {id:'date',  label:'วันที่รับ (YYYY/MM/DD)', required:true, value:todayIso().replace(/-/g,'/')},
+      {id:'place', label:'รับจากที่ไหน', ph:'รพ. / คลินิก / ร้านยา'}
+    ],
+    okText:'บันทึก',
+    onOk:function(v){
+      var q=parseInt(String(v.qty).replace(/[^0-9]/g,''),10)||0;
+      if(!q){ toast('กรุณาใส่จำนวนที่รับ'); return false; }
+      var iso=String(v.date||'').replace(/\//g,'-');
+      if(!validIso(iso)){ toast('วันที่ต้องเป็น YYYY/MM/DD'); return false; }
+
+      m.remaining=(m.remaining||0)+q;
+      m.qty=(m.qty||0)+q;
+      m.history=([{date:iso, qty:q, place:String(v.place||'')}]).concat(m.history||[]);
+      saveCache(); closeModal(); render();
+      toast('บันทึกรับยา '+q+' '+unitOf(m)+' แล้ว');
+      send({action:'addReceive', med_id:id, qty:q, date:iso, place:String(v.place||'')});
+      return true;
+    }
+  });
+}
+
+/* รูปฉลากยา: ย่อภาพก่อนส่ง (กว้างสุด 1200px, JPEG 0.72) */
+function pickPhoto(cb){
+  var inp=document.createElement('input');
+  inp.type='file'; inp.accept='image/*';
+  inp.setAttribute('capture','environment');
+  inp.style.display='none';
+  document.body.appendChild(inp);
+  inp.addEventListener('change',function(){
+    var file=inp.files && inp.files[0];
+    document.body.removeChild(inp);
+    if(!file) return;
+    if(!/^image\//.test(file.type)){ toast('เลือกได้เฉพาะไฟล์รูป'); return; }
+    shrinkImage(file,1200,0.72).then(function(dataUrl){
+      cb(dataUrl, file.name);
+    }).catch(function(){ toast('อ่านไฟล์รูปไม่ได้'); });
+  });
+  inp.click();
+}
+function shrinkImage(file,maxW,q){
+  return new Promise(function(res,rej){
+    var fr=new FileReader();
+    fr.onerror=rej;
+    fr.onload=function(){
+      var img=new Image();
+      img.onerror=rej;
+      img.onload=function(){
+        var w=img.width, h=img.height;
+        if(w>maxW){ h=Math.round(h*maxW/w); w=maxW; }
+        var c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        try{ res(c.toDataURL('image/jpeg',q)); }catch(e){ rej(e); }
+      };
+      img.src=fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+function saveMed(){
+  if(S.saving) return;
+  var f=S.form; if(!f) return;
+  readFormInputs();
+
+  if(!String(f.name).trim()){ toast('กรุณาใส่ชื่อยา'); focusField('f-name','f-dd'); return; }
+  if(!f.person){ toast('กรุณาเลือกผู้ใช้ยา'); return; }
+  if(!f.meals.length){ toast('กรุณาเลือกมื้อยาอย่างน้อย 1 มื้อ'); return; }
+  var qty=parseInt(String(f.qty).replace(/[^0-9]/g,''),10)||0;
+  if(!qty){ toast('กรุณาใส่จำนวนที่ได้รับ'); focusField('f-qty'); return; }
+  var iso=String(f.start||'').replace(/\//g,'-');
+  if(!validIso(iso)){ toast('กรุณาใส่วันเริ่มใช้เป็น YYYY/MM/DD'); focusField('f-start'); return; }
+
+  S.saving=true; render();
+
+  var tempId='TMP-'+Date.now();
+  var med={
+    id:tempId, name:String(f.name).trim(), person:f.person, meals:sortMeals(f.meals),
+    dose:f.dose, freq:'daily', start:iso, qty:qty, remaining:qty, lead:f.lead,
+    tag:'', note:f.note, photo_url:f.photo||'',
+    history:[{date:iso, qty:qty, place:'บันทึกเอง'}]
+  };
+  S.meds.push(med); saveCache();
+
+  var payload={action:'addMed', name:med.name, person:med.person, meals:med.meals, dose:med.dose,
+               freq:'daily', start:iso, qty:qty, lead:med.lead, note:med.note,
+               photo:f.photo||'', place:'บันทึกเอง'};
+
+  S.form=null; S.saving=false; S.navStack=[]; S.view='home'; render(true);
+
+  send(payload).then(function(res){
+    if(res && res.ok){
+      var mm=findMed(tempId);
+      if(mm){ mm.id=res.id||tempId; if(res.photo_url) mm.photo_url=res.photo_url; }
+      saveCache();
+      toast('บันทึกแล้ว · ซิงก์ Google Sheet');
+      return reload().then(function(){ render(); });
+    }
+    toast('บันทึกในเครื่องแล้ว · จะซิงก์ให้เมื่อเน็ตกลับมา');
+  });
+}
+
+function focusField(){
+  for(var i=0;i<arguments.length;i++){
+    var n=el(arguments[i]);
+    if(n){ n.focus(); if(n.select) try{ n.select(); }catch(e){} return; }
+  }
+}
+function readFormInputs(){
+  var f=S.form; if(!f) return;
+  var n=el('f-name');  if(n) f.name=n.value;
+  var q=el('f-qty');   if(q) f.qty=q.value;
+  var s=el('f-start'); if(s) f.start=s.value.replace(/\//g,'-');
+  var t=el('f-note');  if(t) f.note=t.value;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EVENTS
+   ══════════════════════════════════════════════════════════════ */
+document.addEventListener('click',function(ev){
+  if(!ev.target || !ev.target.closest) return;
+  var t=ev.target.closest('[data-act]');
+  if(!t){
+    if(S.dd && !ev.target.closest('#f-dd')) closeDd();
+    return;
+  }
+  var a=t.dataset.act;
+
+  /* dropdown ปิดทุกครั้งที่กดอย่างอื่น */
+  if(S.dd && a!=='ddPick' && a!=='ddNew' && a!=='ddToggle') closeDd();
+
+  switch(a){
+    case 'nav':      navTo(t.dataset.v); break;
+    case 'go':       go(t.dataset.v); break;
+    case 'back':     back(); break;
+    case 'open':     readFormInputs(); go('detail',{selId:t.dataset.id}); break;
+    case 'person':   go('person',{selPerson:t.dataset.ch}); break;
+    case 'meal':     S.mealTab=t.dataset.m; render(); break;
+    case 'toggle':   toggleTaken(t.dataset.id, t.dataset.m); break;
+    case 'addPerson':readFormInputs(); addPerson(); break;
+    case 'receive':  receiveMed(t.dataset.id); break;
+    case 'print':    window.print(); break;
+
+    case 'shareAll':    share(sortedMeds()); break;
+    case 'shareAlerts': share(alertMeds()); break;
+    case 'shareOne':    share([findMed(t.dataset.id)].filter(Boolean)); break;
+    case 'sharePerson': share(medsOf(t.dataset.ch)); break;
+
+    /* form */
+    case 'ddToggle':   readFormInputs(); if(S.dd) closeDd(); else openDd(); break;
+    case 'ddPick':     S.form.name=t.dataset.n; S.form.dirty=true; closeDd(); render(); break;
+    case 'ddNew':      S.form.newName=true; S.form.name=''; closeDd(); render();
+                       setTimeout(function(){ focusField('f-name'); },30); break;
+    case 'pickMode':   readFormInputs(); S.form.newName=false; render(); break;
+    case 'pickPerson': readFormInputs(); S.form.person=t.dataset.ch; S.form.dirty=true; render(); break;
+    case 'toggleMeal': {
+      readFormInputs();
+      var ml=t.dataset.m, i=S.form.meals.indexOf(ml);
+      if(i>=0) S.form.meals.splice(i,1); else S.form.meals.push(ml);
+      S.form.dirty=true; render(); break;
+    }
+    case 'dose':  readFormInputs(); S.form.dose=Math.max(1,S.form.dose+(+t.dataset.d)); S.form.dirty=true; render(); break;
+    case 'lead':  readFormInputs(); S.form.lead=+t.dataset.n; S.form.dirty=true; render(); break;
+    case 'save':  saveMed(); break;
+    case 'photoPick': readFormInputs(); pickPhoto(function(url,name){
+        S.form.photo=url; S.form.photoName=name; S.form.dirty=true; render();
+        toast('แนบรูปฉลากยาแล้ว');
+      }); break;
+    case 'photoClear': readFormInputs(); S.form.photo=''; S.form.photoName=''; render(); break;
+    case 'photoMed': {
+      var id=t.dataset.id;
+      pickPhoto(function(url){
+        var m=findMed(id); if(!m) return;
+        m.photo_url=url; saveCache(); render();
+        toast('กำลังอัปโหลดรูปขึ้น Google Drive…');
+        send({action:'updateMed', id:id, photo:url}).then(function(res){
+          if(res && res.ok && res.photo_url){
+            var mm=findMed(id); if(mm) mm.photo_url=res.photo_url;
+            saveCache(); render(); toast('อัปโหลดรูปฉลากยาแล้ว');
+          }
+        });
+      });
+      break;
+    }
+
+    /* modal */
+    case 'maskClose':   if(ev.target.classList.contains('mask')) closeModal(); break;
+    case 'modalCancel': closeModal(); break;
+    case 'modalOk':     submitModal(); break;
+  }
+});
+
+function submitModal(){
+  var cfg=S.modal; if(!cfg) return;
+  var v={};
+  (cfg.fields||[]).forEach(function(f){ var n=el('m-'+f.id); v[f.id]=n?n.value:''; });
+  cfg.onOk(v);
+}
+
+/* enter/esc ใน modal + esc ปิด dropdown */
+document.addEventListener('keydown',function(ev){
+  if(ev.key==='Escape'){
+    if(S.dd){ closeDd(); return; }
+    if(S.modal){ closeModal(); return; }
+  }
+  if(ev.key==='Enter' && S.modal && ev.target.tagName==='INPUT'){ ev.preventDefault(); submitModal(); }
+});
+
+/* พิมพ์ในฟอร์ม — เก็บค่าไว้ในสเตตโดยไม่ re-render (ไม่งั้น focus หลุด) */
+document.addEventListener('input',function(ev){
+  var t=ev.target;
+  if(!S.form) return;
+  if(t.id==='f-name'){ S.form.name=t.value; S.form.dirty=true; }
+  else if(t.id==='f-note'){ S.form.note=t.value; S.form.dirty=true; }
+  else if(t.id==='f-qty'){
+    var c=t.value.replace(/[^0-9]/g,'').slice(0,5);
+    if(c!==t.value) t.value=c;
+    S.form.qty=c; S.form.dirty=true;
+  }
+  else if(t.id==='f-start'){
+    var atEnd = t.selectionStart===t.value.length;
+    var d=t.value.replace(/[^0-9]/g,'').slice(0,8), out=d;
+    if(d.length>6) out=d.slice(0,4)+'/'+d.slice(4,6)+'/'+d.slice(6);
+    else if(d.length>4) out=d.slice(0,4)+'/'+d.slice(4);
+    if(atEnd && out!==t.value){ t.value=out; t.setSelectionRange(out.length,out.length); }
+    S.form.start=t.value.replace(/\//g,'-'); S.form.dirty=true;
+  }
+});
+
+/* dropdown ต้องตามปุ่มตอน scroll/resize — ปิดไปเลยง่ายและไม่หลุดตำแหน่ง */
+window.addEventListener('scroll',function(){ if(S.dd) closeDd(); },true);
+window.addEventListener('resize',function(){
+  if(S.dd) closeDd();
+  var d=window.innerWidth>=900;
+  if(d!==S.desktop){ readFormInputs(); S.desktop=d; render(); }
+});
+
+/* กลับมาที่แอป → ถ้าข้ามวันแล้วให้ล้างการติ๊กของเมื่อวาน + ดึงข้อมูลใหม่ */
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState!=='visible') return;
+  if(S.takenDate!==todayIso()){ S.taken={}; S.takenDate=todayIso(); S.mealTab=''; saveCache(); render(); }
+  syncUp();
+});
+window.addEventListener('online',syncUp);
+
+function syncUp(){
+  flushQueue().then(function(){ return reload(); }).then(function(ok){ if(ok && S.view!=='form') render(); });
+}
+
+function afterRender(){
+  if(S.view==='form' && S.form){
+    var f=S.form;
+    var n=el('f-name');  if(n && n.value!==f.name) n.value=f.name;
+    var q=el('f-qty');   if(q && q.value!==f.qty) q.value=f.qty;
+    var t=el('f-note');  if(t && t.value!==f.note) t.value=f.note;
+  }
+}
+
+/* ── boot ──────────────────────────────────────────────────── */
+(function boot(){
+  S.takenDate=todayIso();
+  S.mealTab=currentMeal();
+  loadCache();
+  S.form=null;
+  setSync(navigator.onLine===false?'error':'loading');
+  render();
+  flushQueue().then(function(){ return reload(); }).then(function(){ render(); });
+})();
+</script>
+</body>
+</html>
