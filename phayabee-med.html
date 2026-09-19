@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F3B36">
-<title>จัดยาโดยพญาบี v1.2</title>
+<title>จัดยาโดยพญาบี v1.3</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -289,6 +289,8 @@ textarea.inp{min-height:64px;resize:vertical;font-size:var(--fs-base)}
 .danger-zone{margin-top:var(--sp-5);border-top:1px solid var(--line);padding-top:var(--sp-4)}
 .btn-danger{width:100%;height:48px;border-radius:var(--r-md);background:var(--card);
   border:1px solid #F1C4C4;color:var(--req);font-size:var(--fs-md);font-weight:600}
+.stock-btn{flex:1;min-width:0;padding:11px 4px;font-size:var(--fs-cap);border-radius:var(--r-md);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pav{width:46px;height:46px;border-radius:50%;border:1px solid var(--line-input);background:var(--card);
   display:flex;align-items:center;justify-content:center;font-weight:600;cursor:pointer;flex:none;overflow:hidden;padding:0}
 .pav.on{background:var(--teal);border-color:var(--teal);color:#fff}
@@ -394,7 +396,7 @@ textarea.inp{min-height:64px;resize:vertical;font-size:var(--fs-base)}
    หลังบ้าน: Google Apps Script → Google Sheet + Google Drive (รูปฉลากยา)
    ══════════════════════════════════════════════════════════════ */
 
-var VERSION  = 'v1.2';
+var VERSION  = 'v1.3';
 var API_URL  = 'https://script.google.com/macros/s/AKfycbze89lJ0Kd7Wk0a8Hz2jNE2RGJcqOOE6ODVFDen_Va45AJqkVOI_RH2s0oH8rRwnUXV/exec';
 var CACHE_KEY = 'bmed-cache-v1';
 var QUEUE_KEY = 'bmed-queue-v1';
@@ -426,8 +428,8 @@ var S = {
 var FREQS=[{v:'daily',label:'ทุกวัน'},{v:'weekly',label:'รายสัปดาห์'},{v:'asneeded',label:'เมื่อมีอาการ'}];
 
 function blankForm(){
-  return { editId:'', name:'', newName:false, person:'', meals:['เช้า'], dose:1, freq:'daily',
-           qty:'30', start:todayIso(), lead:7, note:'', photo:'', photoName:'', dirty:false };
+  return { editId:'', name:'', newName:false, person:'', meals:['เช้า'], dose:'', freq:'daily',
+           qty:'', start:todayIso(), lead:7, note:'', photo:'', photoName:'', dirty:false };
 }
 
 /* เปิดฟอร์มในโหมดแก้ไข — เติมค่าจากยาที่เลือก */
@@ -594,11 +596,10 @@ function setQueue(q){ try{ localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }
 function pushQueue(job){ var q=getQueue(); q.push(job); if(q.length>50) q.shift(); setQueue(q); }
 
 /* ── api ───────────────────────────────────────────────────── */
-function apiGet(action){
-  var u=API_URL+'?action='+encodeURIComponent(action)+'&t='+Date.now();
-  if(S.sid) u+='&sid='+encodeURIComponent(S.sid);
-  return fetch(u,{method:'GET'}).then(function(r){ return r.json(); });
-}
+/* ❗ห้ามยิง GET ไป /exec จากหน้าเว็บคนละ origin — GAS ตอบ 302 ที่ไม่มี header
+   Access-Control-Allow-Origin ทำให้ fetch ล้มเป็น "Failed to fetch"
+   (เจอจริง 2026-09-19: ล็อกอิน/บันทึกผ่าน แต่โหลดข้อมูลกลับมาไม่ได้เลย)
+   → ทุกเส้นใช้ POST + text/plain ซึ่งไม่โดน preflight และผ่าน CORS ปกติ */
 function apiPost(payload){
   var body={};
   for(var k in payload) body[k]=payload[k];
@@ -618,7 +619,10 @@ function syncHtml(){
   var cls='sync', tx='ซิงก์ Google Sheet แล้ว';
   if(S.sync==='loading'){ tx='กำลังโหลดจาก Google Sheet…'; }
   else if(S.sync==='queued'){ cls+=' off'; tx='บันทึกในเครื่องแล้ว · รอซิงก์'; }
-  else if(S.sync==='error'){ cls+=' err'; tx='ต่อหลังบ้านไม่ได้ · ใช้ข้อมูลในเครื่อง'; }
+  else if(S.sync==='error'){
+    cls+=' err';
+    tx='ต่อหลังบ้านไม่ได้ · ใช้ข้อมูลในเครื่อง'+(S.lastError?' ('+String(S.lastError).slice(0,70)+')':'');
+  }
   return '<span class="'+cls+'" data-sync><i class="dot"></i>'+esc(tx)+'</span>';
 }
 
@@ -655,7 +659,7 @@ function flushQueue(){
 }
 function reload(){
   if(!S.sid) return Promise.resolve(false);
-  return apiGet('load').then(function(res){
+  return apiPost({action:'load'}).then(function(res){
     if(res && res.code==='NOAUTH'){ forceLogout(); return false; }
     if(!res || !res.ok) throw new Error((res&&res.error)||'โหลดข้อมูลไม่สำเร็จ');
     if(res.user){ S.user=res.user; saveAuth(); }
@@ -1257,7 +1261,12 @@ function detailHtml(){
      '<div style="margin-top:var(--sp-2);display:flex;justify-content:space-between;font-size:var(--fs-cap);'+
        'color:var(--text-2);flex-wrap:wrap;gap:4px">'+
        '<span>หมดประมาณ <b style="color:var(--text)">'+esc(d==null?'—':fmtTh(outIso(m)))+'</b></span>'+
-       '<span style="color:var(--amber);font-weight:600">เตือนเติม '+esc(d==null?'—':fmtTh(refillIso(m)))+'</span></div></div>';
+       '<span style="color:var(--amber);font-weight:600">เตือนเติม '+esc(d==null?'—':fmtTh(refillIso(m)))+'</span></div>'+
+     '<div class="no-print" style="margin-top:14px;display:flex;gap:var(--sp-2)">'+
+       '<button class="btn btn-ghost stock-btn" data-act="receive" data-id="'+esc(m.id)+'">＋ รับเพิ่ม</button>'+
+       '<button class="btn btn-ghost stock-btn" data-act="useDose" data-id="'+esc(m.id)+'" data-r="use">− ใช้ไป</button>'+
+       '<button class="btn btn-ghost stock-btn" data-act="useDose" data-id="'+esc(m.id)+'" data-r="discard">− ตัดทิ้ง</button>'+
+     '</div></div>';
 
   var last=(m.history||[])[0];
   h+='<div class="card r20" style="margin-top:var(--sp-3);padding:var(--sp-1) 18px">'+
@@ -1267,14 +1276,14 @@ function detailHtml(){
      '<div style="padding:var(--sp-3) 0;font-size:var(--fs-base)"><span class="muted">โน้ต</span>'+
        '<div class="note-box">'+esc(m.note||'—')+'</div></div></div>';
 
-  h+='<div style="margin-top:var(--sp-3);display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2)">'+
-     '<span style="font-size:var(--fs-cap);font-weight:600;color:var(--text-2)">ประวัติรับยา</span>'+
-     '<button class="btn btn-ghost no-print" data-act="receive" data-id="'+esc(m.id)+'">＋ บันทึกรับยาเพิ่ม</button></div>';
+  h+='<div style="margin-top:var(--sp-3);font-size:var(--fs-cap);font-weight:600;color:var(--text-2)">ประวัติยา</div>';
   h+='<div style="margin-top:var(--sp-2);display:flex;flex-direction:column;gap:var(--sp-1)">';
-  if(!(m.history||[]).length) h+='<div class="muted" style="font-size:var(--fs-cap)">ยังไม่มีประวัติ</div>';
-  (m.history||[]).forEach(function(x){
-    h+='<div class="hist-row"><span class="one">'+esc(fmtTh(x.date)+' · '+x.qty+' '+unitOf(m))+'</span>'+
-       '<span class="muted one" style="text-align:right">'+esc(x.place||'—')+'</span></div>';
+  var rows=medLedger(m);
+  if(!rows.length) h+='<div class="muted" style="font-size:var(--fs-cap)">ยังไม่มีประวัติ</div>';
+  rows.forEach(function(x){
+    h+='<div class="hist-row"><span class="one"><b style="color:'+(x.sign>0?'var(--teal)':'var(--amber)')+'">'+
+       (x.sign>0?'+':'−')+x.qty+' '+esc(unitOf(m))+'</b> · '+esc(fmtTh(x.date))+'</span>'+
+       '<span class="muted one" style="text-align:right">'+esc(x.label)+'</span></div>';
   });
   h+='</div>';
 
@@ -1283,6 +1292,18 @@ function detailHtml(){
      '<div style="margin-top:var(--sp-1);text-align:center;font-size:var(--fs-sm);color:var(--text-2)">'+
      'มือถือ: ส่งทาง LINE · คอม: คัดลอกให้อัตโนมัติ</div></div>';
   return h+'</div>';
+}
+
+/* ประวัติยา = รับเข้า (+) รวมกับ ใช้ไป/ตัดทิ้ง (−) เรียงล่าสุดอยู่บน */
+function medLedger(m){
+  var rows=[];
+  (m.history||[]).forEach(function(x){
+    rows.push({date:x.date, qty:x.qty, sign:1, label:x.place||'รับเข้า'});
+  });
+  (m.adjust||[]).forEach(function(x){
+    rows.push({date:x.date, qty:x.qty, sign:-1, label:x.kind||'ใช้เอง'});
+  });
+  return rows.sort(function(a,b){ return String(b.date).localeCompare(String(a.date)); });
 }
 
 function pageHead(title,closeIcon,rightHtml){
@@ -1488,7 +1509,8 @@ function formHtml(){
      '<div style="flex:1;min-width:0"><div style="font-size:var(--fs-base);font-weight:600">ครั้งละ <i style="color:var(--req);font-style:normal">*</i></div>'+
      '<div class="stepper" style="margin-top:var(--sp-2)">'+
        '<button data-act="dose" data-d="-1" aria-label="ลด">−</button>'+
-       '<b>'+f.dose+' '+esc(unitOf({name:f.name}))+'</b>'+
+       '<b'+(f.dose===''?' style="color:var(--text-3);font-weight:400"':'')+'>'+
+         (f.dose===''?'— ':f.dose+' ')+esc(unitOf({name:f.name}))+'</b>'+
        '<button data-act="dose" data-d="1" aria-label="เพิ่ม">＋</button></div></div>'+
      '<div style="flex:1;min-width:0"><div style="font-size:var(--fs-base);font-weight:600">'+
        (edit?'คงเหลือตอนนี้':'จำนวนที่ได้รับ')+' <i style="color:var(--req);font-style:normal">*</i></div>'+
@@ -1695,6 +1717,8 @@ function saveMed(){
   if(!String(f.name).trim()){ toast('กรุณาใส่ชื่อยา'); focusField('f-name','f-dd'); return; }
   if(!f.person){ toast('กรุณาเลือกผู้ใช้ยา'); return; }
   if(f.freq==='daily' && !f.meals.length){ toast('กรุณาเลือกมื้อยาอย่างน้อย 1 มื้อ'); return; }
+  var dose=parseInt(f.dose,10)||0;
+  if(!dose){ toast('กรุณาใส่ว่ากินครั้งละกี่'+unitOf({name:f.name})); return; }
   var qtyRaw=String(f.qty).replace(/[^0-9]/g,'');
   if(qtyRaw===''){ toast(f.editId?'กรุณาใส่จำนวนคงเหลือ':'กรุณาใส่จำนวนที่ได้รับ'); focusField('f-qty'); return; }
   var qty=parseInt(qtyRaw,10)||0;
@@ -1709,7 +1733,7 @@ function saveMed(){
     var m=findMed(f.editId);
     if(!m){ toast('ไม่พบยานี้แล้ว'); return; }
     m.name=String(f.name).trim(); m.person=f.person; m.meals=meals;
-    m.dose=f.dose; m.freq=f.freq; m.start=iso; m.lead=f.lead; m.note=f.note;
+    m.dose=dose; m.freq=f.freq; m.start=iso; m.lead=f.lead; m.note=f.note;
     m.remaining=qty;
     if(qty>(m.qty||0)) m.qty=qty;            /* นับใหม่ได้มากกว่ายอดฐาน → ขยับฐานตาม */
     if(f.photo) m.photo_url=f.photo;
@@ -1737,7 +1761,7 @@ function saveMed(){
   var tempId='TMP-'+Date.now();
   var med={
     id:tempId, name:String(f.name).trim(), person:f.person, meals:meals,
-    dose:f.dose, freq:f.freq, start:iso, qty:qty, remaining:qty, lead:f.lead,
+    dose:dose, freq:f.freq, start:iso, qty:qty, remaining:qty, lead:f.lead,
     tag:'', note:f.note, photo_url:f.photo||'',
     history:[{date:iso, qty:qty, place:'บันทึกเอง'}]
   };
@@ -1762,6 +1786,35 @@ function saveMed(){
 }
 
 /* หยุดยา — ซ่อนจากรายการ แต่ประวัติในชีทยังอยู่ (active=0) */
+function useDoseModal(id,reason){
+  var m=findMed(id); if(!m) return;
+  var isUse=reason!=='discard';
+  openModal({
+    title: isUse?'บันทึกว่าใช้ไปแล้ว':'บันทึกการตัดทิ้ง',
+    sub: m.name+' — '+m.person+' · ตอนนี้เหลือ '+remainText(m),
+    fields:[
+      {id:'qty',  label:'จำนวนที่'+(isUse?'ใช้ไป':'ตัดทิ้ง')+' ('+unitOf(m)+')', required:true, numeric:true},
+      {id:'date', label:'วันที่ (YYYY/MM/DD)', required:true, value:todayIso().replace(/-/g,'/')}
+    ],
+    okText:'บันทึก',
+    onOk:function(v){
+      var q=parseInt(String(v.qty).replace(/[^0-9]/g,''),10)||0;
+      if(!q){ toast('กรุณาใส่จำนวน'); return false; }
+      if(q>(m.remaining||0)){ toast('มากกว่าที่เหลืออยู่ ('+remainText(m)+')'); return false; }
+      var iso=String(v.date||'').replace(/\//g,'-');
+      if(!validIso(iso)){ toast('วันที่ต้องเป็น YYYY/MM/DD'); return false; }
+
+      closeModal();
+      m.remaining=Math.max(0,(m.remaining||0)-q);
+      m.adjust=([{date:iso, qty:q, kind:isUse?'ใช้เอง':'จำหน่ายทิ้ง'}]).concat(m.adjust||[]);
+      saveCache(); render();
+      toast((isUse?'บันทึกใช้ไป ':'ตัดทิ้ง ')+q+' '+unitOf(m)+' แล้ว');
+      send({action:'useDose', med_id:id, qty:q, date:iso, reason:isUse?'use':'discard'});
+      return true;
+    }
+  });
+}
+
 function confirmDelMed(id){
   var m=findMed(id); if(!m) return;
   openModal({
@@ -1821,6 +1874,7 @@ document.addEventListener('click',function(ev){
     case 'toggle':   toggleTaken(t.dataset.id, t.dataset.m); break;
     case 'addPerson':readFormInputs(); addPerson(); break;
     case 'receive':  receiveMed(t.dataset.id); break;
+    case 'useDose':  useDoseModal(t.dataset.id, t.dataset.r); break;
     case 'print':    window.print(); break;
     case 'account':  openAccountSheet(); break;
     case 'logout':   doLogout(); break;
@@ -1852,7 +1906,13 @@ document.addEventListener('click',function(ev){
       if(i>=0) S.form.meals.splice(i,1); else S.form.meals.push(ml);
       S.form.dirty=true; render(); break;
     }
-    case 'dose':  readFormInputs(); S.form.dose=Math.max(1,S.form.dose+(+t.dataset.d)); S.form.dirty=true; render(); break;
+    case 'dose': {
+      readFormInputs();
+      var dd=+t.dataset.d, cur=parseInt(S.form.dose,10);
+      if(isNaN(cur)){ if(dd>0) S.form.dose=1; }      /* ว่างอยู่: กด ＋ ได้ 1 · กด − ยังว่างเหมือนเดิม */
+      else S.form.dose=Math.max(1,cur+dd);
+      S.form.dirty=true; render(); break;
+    }
     case 'lead':  readFormInputs(); S.form.lead=+t.dataset.n; S.form.dirty=true; render(); break;
     case 'freq':  readFormInputs(); S.form.freq=t.dataset.f; S.form.dirty=true; render(); break;
     case 'editMed': openEditForm(t.dataset.id); break;
