@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F3B36">
-<title>จัดยาโดยพญาบี v1.3</title>
+<title>จัดยาโดยพญาบี v1.4</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -291,6 +291,17 @@ textarea.inp{min-height:64px;resize:vertical;font-size:var(--fs-base)}
   border:1px solid #F1C4C4;color:var(--req);font-size:var(--fs-md);font-weight:600}
 .stock-btn{flex:1;min-width:0;padding:11px 4px;font-size:var(--fs-cap);border-radius:var(--r-md);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rf-item{padding:14px 0;border-bottom:1px solid var(--line-soft)}
+.rf-item:last-child{border-bottom:0;padding-bottom:0}
+.rf-top{display:flex;justify-content:space-between;gap:var(--sp-2);align-items:baseline}
+.rf-sub{margin-top:3px;font-size:var(--fs-cap);color:var(--text-2)}
+.rf-due{margin-top:var(--sp-2);border-radius:var(--r-md);padding:9px var(--sp-3);
+  font-size:13.5px;font-weight:600;display:flex;justify-content:space-between;gap:var(--sp-2);align-items:center}
+.rf-due.now{background:#FEE2E2;color:#991B1B}
+.rf-due.soon{background:var(--amber-bg);color:var(--amber)}
+.rf-due.ok{background:var(--teal-soft);color:var(--teal)}
+.rf-due.none{background:var(--bg);color:var(--text-2);font-weight:400}
+.rf-due span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pav{width:46px;height:46px;border-radius:50%;border:1px solid var(--line-input);background:var(--card);
   display:flex;align-items:center;justify-content:center;font-weight:600;cursor:pointer;flex:none;overflow:hidden;padding:0}
 .pav.on{background:var(--teal);border-color:var(--teal);color:#fff}
@@ -396,7 +407,7 @@ textarea.inp{min-height:64px;resize:vertical;font-size:var(--fs-base)}
    หลังบ้าน: Google Apps Script → Google Sheet + Google Drive (รูปฉลากยา)
    ══════════════════════════════════════════════════════════════ */
 
-var VERSION  = 'v1.3';
+var VERSION  = 'v1.4';
 var API_URL  = 'https://script.google.com/macros/s/AKfycbze89lJ0Kd7Wk0a8Hz2jNE2RGJcqOOE6ODVFDen_Va45AJqkVOI_RH2s0oH8rRwnUXV/exec';
 var CACHE_KEY = 'bmed-cache-v1';
 var QUEUE_KEY = 'bmed-queue-v1';
@@ -436,7 +447,7 @@ function blankForm(){
 function editForm(m){
   return { editId:m.id, name:m.name||'', newName:true, person:m.person||'',
            meals:sortMeals(m.meals||[]), dose:m.dose||1, freq:m.freq||'daily',
-           qty:String(m.remaining==null?0:m.remaining), start:m.start||todayIso(),
+           qty:String(Math.round(remainingOf(m))), start:m.start||todayIso(),
            lead:m.lead||7, note:m.note||'', photo:'', photoName:'', dirty:false };
 }
 function openEditForm(id){
@@ -489,7 +500,24 @@ function perDay(m){
   if(m.freq==='asneeded') return 0;
   return (m.meals||[]).length*(m.dose||1);
 }
-function daysLeft(m){ var p=perDay(m); return p>0 ? Math.floor((m.remaining||0)/p) : null; }
+/* คงเหลือ ณ วันนี้ = ยอดที่นับไว้ล่าสุด − ที่ควรกินไปแล้วตั้งแต่วันที่นับ
+   (บันทึกครั้งเดียวตอนรับยา แล้วแอปหักให้เองทุกวัน ไม่ต้องรอให้ใครติ๊ก) */
+function countedFrom(m){
+  var c=String(m.counted_at||'');
+  return validIso(c) ? c : String(m.start||'');
+}
+function daysSinceCount(m){
+  var from=countedFrom(m);
+  if(!validIso(from)) return 0;
+  var a=parseIso(from), b=parseIso(todayIso());
+  return Math.max(0, Math.round((b-a)/86400000));
+}
+function remainingOf(m){
+  var base=Number(m.remaining||0), p=perDay(m);
+  if(!(p>0)) return base;                       /* ยาตามอาการ — หักเองเท่านั้น */
+  return Math.max(0, base - p*daysSinceCount(m));
+}
+function daysLeft(m){ var p=perDay(m); return p>0 ? Math.floor(remainingOf(m)/p) : null; }
 function isWarn(m){ var d=daysLeft(m); return d!=null && d<=(m.lead||7); }
 function outIso(m){ var d=daysLeft(m); return d==null?null:addDays(todayIso(),d); }
 function refillIso(m){ var d=daysLeft(m); return d==null?null:addDays(todayIso(),Math.max(d-(m.lead||7),0)); }
@@ -500,7 +528,16 @@ function mealsText(m){
 }
 function sortMeals(a){ return a.slice().sort(function(x,y){ return MEALS.indexOf(x)-MEALS.indexOf(y); }); }
 function daysText(m){ var d=daysLeft(m); return d==null?'—':(d+' วัน'+(isWarn(m)?' ⚠':'')); }
-function remainText(m){ return (m.remaining||0)+' '+unitOf(m); }
+function remainText(m){ return fmtQty(remainingOf(m))+' '+unitOf(m); }
+function fmtQty(n){ return String(Math.round(n)); }
+/* อัตราการกิน — ยารายสัปดาห์บอกเป็นต่อสัปดาห์ ไม่งั้นปัดเป็น "วันละ 0" */
+function rateText(m){
+  if(m.freq==='weekly')   return 'สัปดาห์ละ '+(m.dose||1)+' '+unitOf(m);
+  if(m.freq==='asneeded') return 'เมื่อมีอาการ';
+  return 'วันละ '+fmtQty(perDay(m))+' '+unitOf(m);
+}
+/* วันที่ต้องไปเบิกยา = วันที่ยาหมด − จำนวนวันที่ตั้งให้เตือนล่วงหน้า */
+function refillInDays(m){ var d=daysLeft(m); return d==null?null:Math.max(0,d-(m.lead||7)); }
 function alertMeds(){ return S.meds.filter(isWarn).sort(byUrgency); }
 function byUrgency(a,b){
   var da=daysLeft(a), db=daysLeft(b);
@@ -756,15 +793,25 @@ function confirmLeave(fn){
 
 /* ── share text ────────────────────────────────────────────── */
 function shareText(meds){
-  var lines=['รายการยา — จัดยาโดยพญาบี ('+fmtTh(todayIso())+')',''];
-  meds.forEach(function(m){
-    var d=daysLeft(m);
-    lines.push('• '+m.name+' — '+m.person);
-    lines.push('  มื้อ: '+mealsText(m)+' ครั้งละ '+(m.dose||1)+' '+unitOf(m));
-    lines.push('  คงเหลือ '+remainText(m)+(d!=null
-      ? ' · หมดประมาณ '+fmtTh(outIso(m))+' · เตือนเติม '+fmtTh(refillIso(m)) : ''));
-    if(m.note) lines.push('  โน้ต: '+m.note);
-    lines.push('');
+  var lines=['ตารางเบิกยา — จัดยาโดยพญาบี ('+fmtTh(todayIso())+')',''];
+  var byPerson={}, order=[];
+  meds.slice().sort(function(a,b){ return refillRank(a)-refillRank(b); }).forEach(function(m){
+    if(!byPerson[m.person]){ byPerson[m.person]=[]; order.push(m.person); }
+    byPerson[m.person].push(m);
+  });
+  order.forEach(function(who){
+    lines.push('— '+who+' —');
+    byPerson[who].forEach(function(m){
+      var d=daysLeft(m);
+      lines.push('• '+m.name);
+      lines.push('  '+mealsText(m)+(m.freq==='daily'?(' ครั้งละ '+(m.dose||1)+' '+unitOf(m)+' · '+rateText(m)):(' · '+rateText(m))));
+      lines.push('  เหลือ '+remainText(m)+(d!=null?' · ยาหมด '+fmtTh(outIso(m)):''));
+      lines.push('  ' + (d==null ? 'ยาใช้เมื่อมีอาการ — คำนวณวันเบิกไม่ได้'
+        : (refillInDays(m)<=0 ? 'ถึงคิวเบิกแล้ว'
+                              : 'เบิกภายใน '+fmtTh(refillIso(m))+' (อีก '+refillInDays(m)+' วัน)')));
+      if(m.note) lines.push('  โน้ต: '+m.note);
+      lines.push('');
+    });
   });
   return lines.join('\n');
 }
@@ -965,7 +1012,7 @@ function confirmSetStatus(username,approve){
 
 /* ── sidebar ───────────────────────────────────────────────── */
 var NAV=[ {v:'home',label:'⌂ หน้าหลัก'}, {v:'history',label:'↺ ประวัติรับยา'},
-          {v:'summary',label:'▤ สรุปทั้งบ้าน'}, {v:'print',label:'⎙ พิมพ์ / PDF'} ];
+          {v:'summary',label:'▤ ตารางเบิกยา'}, {v:'print',label:'⎙ พิมพ์ / PDF'} ];
 
 function sidebarHtml(){
   var h='<div class="sidebar no-print"><div class="logo">✚ จัดยาโดยพญาบี</div>';
@@ -991,7 +1038,7 @@ function sidebarHtml(){
 /* ── bottom tabs ───────────────────────────────────────────── */
 function tabbarHtml(){
   var items=[{ic:'⌂',label:'หน้าหลัก',v:'home'},{ic:'↺',label:'ประวัติ',v:'history'},
-             {fab:true,v:'form'},{ic:'▤',label:'สรุปบ้าน',v:'summary'},{ic:'⎙',label:'พิมพ์',v:'print'}];
+             {fab:true,v:'form'},{ic:'▤',label:'เบิกยา',v:'summary'},{ic:'⎙',label:'พิมพ์',v:'print'}];
   var h='<div class="tabbar no-print">';
   items.forEach(function(t){
     if(t.fab){ h+='<button class="fab" data-act="nav" data-v="form" aria-label="เพิ่มยา">＋</button>'; return; }
@@ -1034,6 +1081,26 @@ function openAccountSheet(){
   S.modal={sheet:true};
 }
 
+/* ── คิวเบิกยา ─────────────────────────────────────────────── */
+/* refillIso = วันที่ยาหมด − จำนวนวันเตือนล่วงหน้า = วันที่ควรไปเบิก */
+function refillRank(m){
+  var d=refillInDays(m);
+  return d==null ? 99999 : d;                 /* ยาตามอาการ คำนวณไม่ได้ → ไว้ท้ายสุด */
+}
+function refillState(m){
+  var d=refillInDays(m);
+  if(d==null) return 'none';
+  if(d<=0)    return 'now';
+  if(d<=7)    return 'soon';
+  return 'ok';
+}
+function refillLine(m){
+  var d=refillInDays(m);
+  if(d==null) return { cls:'none', main:'คำนวณวันเบิกไม่ได้', right:'ยาใช้เมื่อมีอาการ' };
+  if(d<=0)    return { cls:'now',  main:'ถึงคิวเบิกแล้ว', right:'ยาหมด '+fmtTh(outIso(m)) };
+  return { cls:refillState(m), main:'เบิกภายใน '+fmtTh(refillIso(m)), right:'อีก '+d+' วัน' };
+}
+
 /* ── hero / care / empty ───────────────────────────────────── */
 function heroKicker(){
   var due=0, left=0;
@@ -1060,14 +1127,14 @@ function careHtml(){
 }
 function emptyHtml(){
   return '<div class="empty"><div class="ph">'+imgTag(IMG.empty,'แผงยา')+'</div>'+
-    '<div class="tx"><b>ยังไม่มีรายการยา</b><p>เพิ่มยาตัวแรกของบ้าน แล้วแอปจะคำนวณวันหมดและวันที่ต้องสั่งเพิ่มให้เอง</p>'+
+    '<div class="tx"><b>ยังไม่มีรายการยา</b><p>เพิ่มยาตัวแรกของบ้าน แล้วแอปจะคำนวณวันหมดและวันที่ต้องไปเบิกให้เอง</p>'+
     '<button class="btn btn-teal" data-act="nav" data-v="form" style="max-width:260px;margin:0 auto">＋ เพิ่มยา</button></div></div>';
 }
 
 /* ── alert bar ─────────────────────────────────────────────── */
 function alertText(){
   return alertMeds().map(function(m){
-    return m.name+' ของ '+m.person+' เหลือ '+daysLeft(m)+' วัน — สั่งเพิ่มภายใน '+fmtTh(outIso(m));
+    return m.name+' ของ '+m.person+' เหลืออีก '+daysLeft(m)+' วัน — ต้องเบิกก่อน '+fmtTh(outIso(m));
   }).join(' · ');
 }
 function alertBarHtml(mobile){
@@ -1076,9 +1143,9 @@ function alertBarHtml(mobile){
     return '<div class="alert-bar" style="margin-top:var(--sp-4);border-radius:var(--r-xl);padding:14px 16px;'+
       'display:flex;gap:var(--sp-3);align-items:flex-start">'+
       '<i style="width:8px;height:8px;border-radius:50%;background:var(--amber);margin-top:6px;flex:none"></i>'+
-      '<div style="font-size:var(--fs-base);line-height:1.45"><b>ยาใกล้หมด '+a.length+' รายการ</b><br>'+esc(alertText())+'</div></div>';
+      '<div style="font-size:var(--fs-base);line-height:1.45"><b>ต้องไปเบิกยา '+a.length+' รายการ</b><br>'+esc(alertText())+'</div></div>';
   }
-  return '<div class="alert-bar" style="margin-top:14px"><b>ยาใกล้หมด '+a.length+' รายการ</b> — '+esc(alertText())+'</div>';
+  return '<div class="alert-bar" style="margin-top:14px"><b>ต้องไปเบิกยา '+a.length+' รายการ</b> — '+esc(alertText())+'</div>';
 }
 
 /* ── dashboard (desktop) ───────────────────────────────────── */
@@ -1093,19 +1160,22 @@ function dashHtml(){
   h+=alertBarHtml(false);
 
   /* stat cards */
-  var next=list.filter(function(m){ return daysLeft(m)!=null; })[0];
+  var next=list.filter(function(m){ return refillInDays(m)!=null; })
+               .sort(function(a,b){ return refillRank(a)-refillRank(b); })[0];
   h+='<div class="stats" style="margin-top:var(--sp-4)">'+
      '<div class="stat"><div class="lb">ยาที่ใช้อยู่</div><div class="vl">'+list.length+'</div>'+
        '<div class="sb">'+S.people.length+' สมาชิก</div></div>'+
      (a.length
        ? '<button class="stat hot" data-act="go" data-v="alerts">'+
-           '<div class="lb">ต้องสั่งเพิ่ม</div><div class="vl">'+a.length+'</div>'+
+           '<div class="lb">ต้องไปเบิกยา</div><div class="vl">'+a.length+'</div>'+
            '<div class="sb">'+esc(a[0].name+' · ก่อน '+fmtTh(outIso(a[0])))+'</div></button>'
-       : '<div class="stat"><div class="lb">ต้องสั่งเพิ่ม</div><div class="vl">0</div>'+
+       : '<div class="stat"><div class="lb">ต้องไปเบิกยา</div><div class="vl">0</div>'+
            '<div class="sb">ไม่มี</div></div>')+
-     '<div class="stat"><div class="lb">เติมยาครั้งถัดไป</div>'+
-       '<div class="vl" style="font-size:22px;color:var(--text)">'+esc(next?fmtTh(outIso(next)):'—')+'</div>'+
-       '<div class="sb">'+esc(next?next.name+' · '+next.person:'ยังไม่มีข้อมูล')+'</div></div></div>';
+     '<button class="stat" data-act="nav" data-v="summary" style="cursor:pointer">'+
+       '<div class="lb">ต้องไปเบิกยาครั้งถัดไป</div>'+
+       '<div class="vl" style="font-size:22px;color:var(--text)">'+
+         esc(next ? (refillInDays(next)<=0?'ถึงคิวแล้ว':fmtTh(refillIso(next))) : '—')+'</div>'+
+       '<div class="sb">'+esc(next?next.name+' · '+next.person:'ยังไม่มีข้อมูล')+'</div></button></div>';
 
   if(!list.length) return h+'<div style="margin-top:var(--sp-4)">'+emptyHtml()+'</div>';
 
@@ -1140,7 +1210,7 @@ function refillCardHtml(){
     h+='<div class="refill"><div class="dt'+(hot?' hot':'')+'" style="color:'+(hot?'var(--amber)':'var(--text)')+'">'+
        '<div class="d">'+d.getDate()+'</div><div class="m">'+TH_MON[d.getMonth()]+'</div></div>'+
        '<div class="tx"><b class="one">'+esc(m.name+' — '+m.person)+'</b><br><span class="muted">'+
-       esc(hot ? 'สั่งเพิ่มเลย · เหลือ '+remainText(m)
+       esc(hot ? 'ไปเบิกได้เลย · เหลือ '+remainText(m)
                : 'เตือน '+fmtTh(refillIso(m))+' (ล่วงหน้า '+(m.lead||7)+' วัน)')+'</span></div></div>';
   });
   return h+'</div></div>';
@@ -1228,7 +1298,7 @@ function detailHtml(){
   if(!m) return '<div class="mid">'+pageHead('รายละเอียดยา')+
     '<div class="card" style="margin-top:var(--sp-4)">ไม่พบยานี้แล้ว (อาจถูกลบไป)</div></div>';
 
-  var d=daysLeft(m), pct=Math.round(100*(m.remaining||0)/Math.max(m.qty||1,1));
+  var d=daysLeft(m), rem=remainingOf(m), pct=Math.round(100*rem/Math.max(m.qty||1,1));
   var h='<div class="narrow">'+pageHead('รายละเอียดยา','',
     '<button class="btn btn-ghost no-print" data-act="editMed" data-id="'+esc(m.id)+'" style="flex:none">แก้ไข</button>');
 
@@ -1256,12 +1326,12 @@ function detailHtml(){
 
   h+='<div class="card r20" style="margin-top:var(--sp-3);padding:18px">'+
      '<div style="display:flex;justify-content:space-between;font-size:var(--fs-base)">'+
-       '<span class="muted">คงเหลือ</span><b>'+(m.remaining||0)+' / '+(m.qty||0)+' '+esc(unitOf(m))+'</b></div>'+
+       '<span class="muted">คงเหลือวันนี้</span><b>'+fmtQty(rem)+' / '+(m.qty||0)+' '+esc(unitOf(m))+'</b></div>'+
      '<div class="bar"><i style="width:'+Math.max(0,Math.min(100,pct))+'%"></i></div>'+
      '<div style="margin-top:var(--sp-2);display:flex;justify-content:space-between;font-size:var(--fs-cap);'+
        'color:var(--text-2);flex-wrap:wrap;gap:4px">'+
        '<span>หมดประมาณ <b style="color:var(--text)">'+esc(d==null?'—':fmtTh(outIso(m)))+'</b></span>'+
-       '<span style="color:var(--amber);font-weight:600">เตือนเติม '+esc(d==null?'—':fmtTh(refillIso(m)))+'</span></div>'+
+       '<span style="color:var(--amber);font-weight:600">เบิกภายใน '+esc(d==null?'—':fmtTh(refillIso(m)))+'</span></div>'+
      '<div class="no-print" style="margin-top:14px;display:flex;gap:var(--sp-2)">'+
        '<button class="btn btn-ghost stock-btn" data-act="receive" data-id="'+esc(m.id)+'">＋ รับเพิ่ม</button>'+
        '<button class="btn btn-ghost stock-btn" data-act="useDose" data-id="'+esc(m.id)+'" data-r="use">− ใช้ไป</button>'+
@@ -1315,7 +1385,7 @@ function pageHead(title,closeIcon,rightHtml){
 /* ── alerts ────────────────────────────────────────────────── */
 function alertsHtml(){
   var a=alertMeds();
-  var h='<div class="mid">'+pageHead('ต้องสั่งเพิ่ม ('+a.length+')');
+  var h='<div class="mid">'+pageHead('ต้องไปเบิกยา ('+a.length+')');
   h+='<div style="margin-top:var(--sp-4);display:flex;flex-direction:column;gap:var(--sp-2)">';
   if(!a.length) h+='<div class="card">ตอนนี้ยังไม่มียาที่ใกล้หมด</div>';
   a.forEach(function(m){
@@ -1328,10 +1398,10 @@ function alertsHtml(){
          esc(mealsText(m)+' · เหลือ '+remainText(m)+' · หมดประมาณ '+fmtTh(outIso(m)))+'</div>'+
        '<div style="margin-top:var(--sp-2);font-size:13.5px;font-weight:600;color:var(--amber);'+
          'background:var(--amber-bg);border-radius:var(--r-sm);padding:var(--sp-2) var(--sp-3)">'+
-         'สั่งเพิ่มภายใน '+esc(fmtTh(outIso(m)))+'</div></button>';
+         'ต้องเบิกก่อน '+esc(fmtTh(outIso(m)))+'</div></button>';
   });
   h+='</div>';
-  if(a.length) h+='<button class="btn btn-line block no-print" style="margin-top:var(--sp-4)" data-act="shareAlerts">ส่งรายการที่ต้องสั่งเพิ่ม</button>';
+  if(a.length) h+='<button class="btn btn-line block no-print" style="margin-top:var(--sp-4)" data-act="shareAlerts">ส่งรายการที่ต้องไปเบิก</button>';
   return h+'</div>';
 }
 
@@ -1355,7 +1425,7 @@ function personHtml(){
   if(warn.length){
     h+='<div class="alert-bar" style="margin-top:var(--sp-3);border-radius:var(--r-xl);padding:var(--sp-3) var(--sp-4);font-size:var(--fs-base)">'+
        esc(warn.map(function(m){
-         return m.name+' เหลือ '+daysLeft(m)+' วัน — สั่งเพิ่มภายใน '+fmtTh(outIso(m));
+         return m.name+' เหลืออีก '+daysLeft(m)+' วัน — ต้องเบิกก่อน '+fmtTh(outIso(m));
        }).join(' · '))+'</div>';
   }
 
@@ -1400,25 +1470,52 @@ function historyHtml(){
 }
 
 /* ── summary ───────────────────────────────────────────────── */
+/* ── ตารางเบิกยา (รายคน × รายตัวยา) ── */
 function summaryHtml(){
-  var h='<div class="wide"><div style="font-size:22px;font-weight:700">สรุปยาทั้งบ้าน</div>'+
-        '<div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">';
-  if(!S.people.length) h+='<div class="card muted">ยังไม่มีสมาชิก</div>';
-  S.people.forEach(function(p){
-    var list=medsOf(p.char);
+  var withPlan=sortedMeds().filter(function(m){ return refillInDays(m)!=null; });
+  var dueSoon=withPlan.filter(function(m){ return refillInDays(m)<=7; });
+
+  var h='<div class="wide">'+
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:var(--sp-2)">'+
+      '<div><div style="font-size:22px;font-weight:700">ตารางเบิกยา</div>'+
+      '<div class="muted" style="font-size:13.5px;margin-top:2px">'+
+        'คิดจากวันที่รับยา + กินครบทุกมื้อตามที่กำหนด</div></div>'+
+      '<button class="btn btn-line no-print" data-act="shareRefill">ส่งตารางเบิกยา</button></div>';
+
+  h+= dueSoon.length
+    ? '<div class="alert-bar" style="margin-top:14px"><b>ต้องไปเบิก '+dueSoon.length+' รายการภายใน 7 วัน</b> — '+
+        esc(dueSoon.map(function(m){ return m.name+' ของ '+m.person; }).join(' · '))+'</div>'
+    : '<div class="card" style="margin-top:14px;font-size:14px;color:var(--text-2)">'+
+        (withPlan.length?'ยังไม่มีรายการที่ต้องเบิกใน 7 วันนี้':'ยังไม่มียาที่คำนวณวันเบิกได้')+'</div>';
+
+  /* จัดกลุ่มตามคน แล้วเรียงคนที่ใกล้ถึงคิวเบิกที่สุดขึ้นก่อน */
+  var groups=S.people.map(function(p){
+    var list=sortedMeds().filter(function(m){ return m.person===p.char; })
+                         .sort(function(a,b){ return refillRank(a)-refillRank(b); });
+    return { p:p, list:list, rank:list.length?refillRank(list[0]):99999 };
+  }).filter(function(g){ return g.list.length; })
+    .sort(function(a,b){ return a.rank-b.rank; });
+
+  if(!groups.length) return h+'<div style="margin-top:14px">'+emptyHtml()+'</div></div>';
+
+  h+='<div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px">';
+  groups.forEach(function(g){
     h+='<div class="card" style="border-radius:18px;padding:18px">'+
-       '<div style="display:flex;align-items:center;gap:var(--sp-2);min-width:0">'+avatar(p.char,40)+
-       '<b class="one" style="font-size:var(--fs-lg)">คุณ '+esc(personLabel(p))+'</b></div>'+
-       '<div style="margin-top:var(--sp-3);display:flex;flex-direction:column;gap:var(--sp-2)">';
-    if(!list.length) h+='<div class="muted" style="font-size:var(--fs-base)">ยังไม่มียา</div>';
-    list.forEach(function(m){
-      var w=isWarn(m);
-      h+='<div style="display:flex;justify-content:space-between;font-size:var(--fs-base);'+
-         'border-bottom:1px solid var(--line-soft);padding-bottom:var(--sp-2);gap:var(--sp-2)">'+
-         '<span class="one"><b>'+esc(m.name)+'</b> <span class="muted">· '+esc(mealsText(m))+'</span></span>'+
-         '<b style="color:'+(w?'var(--amber)':'var(--teal)')+';flex:none">'+esc(daysLeft(m)==null?'—':daysLeft(m)+' วัน')+'</b></div>';
+       '<div style="display:flex;align-items:center;gap:var(--sp-2);min-width:0">'+avatar(g.p.char,40)+
+       '<div style="min-width:0"><b class="one" style="font-size:var(--fs-lg)">คุณ '+esc(personLabel(g.p))+'</b>'+
+       '<div class="muted one" style="font-size:var(--fs-cap)">'+g.list.length+' รายการยา</div></div></div>';
+    g.list.forEach(function(m){
+      var r=refillLine(m), d=daysLeft(m);
+      h+='<div class="rf-item">'+
+         '<div class="rf-top"><b class="one" style="font-size:15.5px">'+esc(m.name)+'</b>'+
+           '<span class="muted" style="font-size:var(--fs-cap);flex:none">'+
+           esc(rateText(m))+'</span></div>'+
+         '<div class="rf-sub one">'+esc(mealsText(m)+' · เหลือ '+remainText(m)+
+           (d==null?'':' · ยาหมด '+fmtTh(outIso(m))))+'</div>'+
+         '<div class="rf-due '+r.cls+'"><span>'+esc(r.main)+'</span><span style="flex:none">'+esc(r.right)+'</span></div>'+
+         '</div>';
     });
-    h+='</div></div>';
+    h+='</div>';
   });
   return h+'</div></div>';
 }
@@ -1611,18 +1708,11 @@ function findMed(id){ return S.meds.filter(function(m){ return String(m.id)===St
 function toggleTaken(id,meal){
   var m=findMed(id); if(!m) return;
   var k=id+'-'+meal, want=!S.taken[k];
-  if(want && (m.remaining||0)<=0){ toast('ยาหมดแล้ว — บันทึกรับยาเพิ่มก่อนนะครับ'); return; }
-
   S.taken[k]=want;
-  m.remaining = want ? Math.max(0,(m.remaining||0)-(m.dose||1)) : (m.remaining||0)+(m.dose||1);
   saveCache(); render();
-
-  send({action:'setTaken', med_id:id, meal:meal, date:todayIso(), taken:want}).then(function(res){
-    if(res && res.ok && typeof res.remaining==='number'){
-      var mm=findMed(id);
-      if(mm && mm.remaining!==res.remaining){ mm.remaining=res.remaining; saveCache(); render(); }
-    }
-  });
+  /* ❗ไม่หักคงเหลือตรงนี้ — คงเหลือหักตามตารางกินอัตโนมัติอยู่แล้ว
+     ติ๊ก = บันทึกว่ากินแล้ว ไว้ดูว่ากินครบไหม */
+  send({action:'setTaken', med_id:id, meal:meal, date:todayIso(), taken:want});
 }
 
 function addPerson(){
@@ -1660,7 +1750,8 @@ function receiveMed(id){
       var iso=String(v.date||'').replace(/\//g,'-');
       if(!validIso(iso)){ toast('วันที่ต้องเป็น YYYY/MM/DD'); return false; }
 
-      m.remaining=(m.remaining||0)+q;
+      m.remaining=remainingOf(m)+q;
+      m.counted_at=todayIso();
       m.qty=(m.qty||0)+q;
       m.history=([{date:iso, qty:q, place:String(v.place||'')}]).concat(m.history||[]);
       saveCache(); closeModal(); render();
@@ -1734,7 +1825,7 @@ function saveMed(){
     if(!m){ toast('ไม่พบยานี้แล้ว'); return; }
     m.name=String(f.name).trim(); m.person=f.person; m.meals=meals;
     m.dose=dose; m.freq=f.freq; m.start=iso; m.lead=f.lead; m.note=f.note;
-    m.remaining=qty;
+    m.remaining=qty; m.counted_at=todayIso();
     if(qty>(m.qty||0)) m.qty=qty;            /* นับใหม่ได้มากกว่ายอดฐาน → ขยับฐานตาม */
     if(f.photo) m.photo_url=f.photo;
     saveCache();
@@ -1761,7 +1852,7 @@ function saveMed(){
   var tempId='TMP-'+Date.now();
   var med={
     id:tempId, name:String(f.name).trim(), person:f.person, meals:meals,
-    dose:dose, freq:f.freq, start:iso, qty:qty, remaining:qty, lead:f.lead,
+    dose:dose, freq:f.freq, start:iso, qty:qty, remaining:qty, counted_at:iso, lead:f.lead,
     tag:'', note:f.note, photo_url:f.photo||'',
     history:[{date:iso, qty:qty, place:'บันทึกเอง'}]
   };
@@ -1800,12 +1891,13 @@ function useDoseModal(id,reason){
     onOk:function(v){
       var q=parseInt(String(v.qty).replace(/[^0-9]/g,''),10)||0;
       if(!q){ toast('กรุณาใส่จำนวน'); return false; }
-      if(q>(m.remaining||0)){ toast('มากกว่าที่เหลืออยู่ ('+remainText(m)+')'); return false; }
+      if(q>remainingOf(m)){ toast('มากกว่าที่เหลืออยู่ ('+remainText(m)+')'); return false; }
       var iso=String(v.date||'').replace(/\//g,'-');
       if(!validIso(iso)){ toast('วันที่ต้องเป็น YYYY/MM/DD'); return false; }
 
       closeModal();
-      m.remaining=Math.max(0,(m.remaining||0)-q);
+      m.remaining=Math.max(0,remainingOf(m)-q);
+      m.counted_at=todayIso();
       m.adjust=([{date:iso, qty:q, kind:isUse?'ใช้เอง':'จำหน่ายทิ้ง'}]).concat(m.adjust||[]);
       saveCache(); render();
       toast((isUse?'บันทึกใช้ไป ':'ตัดทิ้ง ')+q+' '+unitOf(m)+' แล้ว');
@@ -1889,6 +1981,7 @@ document.addEventListener('click',function(ev){
                      break;
 
     case 'shareAll':    share(sortedMeds()); break;
+    case 'shareRefill': share(sortedMeds().filter(function(m){ return refillInDays(m)!=null; })); break;
     case 'shareAlerts': share(alertMeds()); break;
     case 'shareOne':    share([findMed(t.dataset.id)].filter(Boolean)); break;
     case 'sharePerson': share(medsOf(t.dataset.ch)); break;
