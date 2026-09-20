@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F3B36">
-<title>จัดยาโดยพญาบี v1.4</title>
+<title>จัดยาโดยพญาบี v1.5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -302,6 +302,39 @@ textarea.inp{min-height:64px;resize:vertical;font-size:var(--fs-base)}
 .rf-due.ok{background:var(--teal-soft);color:var(--teal)}
 .rf-due.none{background:var(--bg);color:var(--text-2);font-weight:400}
 .rf-due span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.cal-bar{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-top:var(--sp-4)}
+.cal-bar .mo{font-size:var(--fs-lg);font-weight:700;text-align:center;flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-nav{width:40px;height:40px;flex:none;border-radius:var(--r-md);background:var(--card);
+  border:1px solid var(--line);color:var(--teal);font-size:18px;cursor:pointer}
+.cal-dows{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:var(--sp-3)}
+.cal-dows span{text-align:center;font-size:11.5px;font-weight:600;color:var(--text-3);padding:4px 0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:2px}
+.cal-cell{position:relative;aspect-ratio:1/1;min-height:42px;border:1px solid var(--line);
+  background:var(--card);border-radius:var(--r-sm);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:2px;font-family:var(--font)}
+.cal-cell.empty{border:0;background:transparent;cursor:default}
+.cal-cell .d{font-size:var(--fs-cap);color:var(--text);line-height:1}
+.cal-cell.today{border-color:var(--teal);border-width:2px}
+.cal-cell.today .d{color:var(--teal);font-weight:700}
+.cal-cell.on{background:var(--teal);border-color:var(--teal)}
+.cal-cell.on .d{color:#fff;font-weight:700}
+.cal-dots{display:flex;gap:3px;height:6px;align-items:center}
+.cal-dots i{width:6px;height:6px;border-radius:50%;display:block;flex:none}
+.cal-dots i.out{background:var(--req)}
+.cal-dots i.rf{background:var(--amber)}
+.cal-cell.on .cal-dots i{box-shadow:0 0 0 1.5px #fff}
+.cal-legend{display:flex;gap:var(--sp-4);flex-wrap:wrap;margin-top:var(--sp-3);
+  font-size:var(--fs-cap);color:var(--text-2)}
+.cal-legend span{display:inline-flex;align-items:center;gap:6px}
+.cal-legend i{width:8px;height:8px;border-radius:50%;display:block;flex:none}
+.cal-ev{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:12px 14px;display:flex;align-items:center;gap:var(--sp-3);cursor:pointer;width:100%;text-align:left}
+.cal-ev .bd{flex:1;min-width:0}
+.cal-ev .tag{font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:20px;flex:none;white-space:nowrap}
+.cal-ev .tag.out{background:#FEE2E2;color:#991B1B}
+.cal-ev .tag.rf{background:var(--amber-bg);color:var(--amber)}
 .pav{width:46px;height:46px;border-radius:50%;border:1px solid var(--line-input);background:var(--card);
   display:flex;align-items:center;justify-content:center;font-weight:600;cursor:pointer;flex:none;overflow:hidden;padding:0}
 .pav.on{background:var(--teal);border-color:var(--teal);color:#fff}
@@ -407,7 +440,7 @@ textarea.inp{min-height:64px;resize:vertical;font-size:var(--fs-base)}
    หลังบ้าน: Google Apps Script → Google Sheet + Google Drive (รูปฉลากยา)
    ══════════════════════════════════════════════════════════════ */
 
-var VERSION  = 'v1.4';
+var VERSION  = 'v1.5';
 var API_URL  = 'https://script.google.com/macros/s/AKfycbze89lJ0Kd7Wk0a8Hz2jNE2RGJcqOOE6ODVFDen_Va45AJqkVOI_RH2s0oH8rRwnUXV/exec';
 var CACHE_KEY = 'bmed-cache-v1';
 var QUEUE_KEY = 'bmed-queue-v1';
@@ -422,6 +455,9 @@ var IMG = {
 
 var MEALS    = ['เช้า','กลางวัน','เย็น','ก่อนนอน'];
 var TH_MON   = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+var TH_MON_F = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+var TH_DOW   = ['อา','จ','อ','พ','พฤ','ศ','ส'];
 var TH_DAY   = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
 var PALETTE  = ['#4FB3A9','#E6B35A','#9BC47E','#8FB6E0','#D89AB5','#C9A97E'];
 
@@ -433,7 +469,7 @@ var S = {
   dd:false, ddHi:-1,
   form:null, saving:false, modal:null, desktop:window.innerWidth>=900,
   sid:'', user:null, gateMsg:'', gateBusy:false, gateUser:'', gateShowPw:false,
-  users:null, sheetUrl:''
+  users:null, sheetUrl:'', calMonth:'', calDay:''
 };
 
 var FREQS=[{v:'daily',label:'ทุกวัน'},{v:'weekly',label:'รายสัปดาห์'},{v:'asneeded',label:'เมื่อมีอาการ'}];
@@ -936,6 +972,7 @@ function viewHtml(){
     case 'summary': return summaryHtml();
     case 'print':   return printHtml();
     case 'users':   return usersHtml();
+    case 'calendar':return calendarHtml();
   }
   return '';
 }
@@ -1011,8 +1048,9 @@ function confirmSetStatus(username,approve){
 }
 
 /* ── sidebar ───────────────────────────────────────────────── */
-var NAV=[ {v:'home',label:'⌂ หน้าหลัก'}, {v:'history',label:'↺ ประวัติรับยา'},
-          {v:'summary',label:'▤ ตารางเบิกยา'}, {v:'print',label:'⎙ พิมพ์ / PDF'} ];
+var NAV=[ {v:'home',label:'⌂ หน้าหลัก'}, {v:'calendar',label:'▦ ปฏิทินยาหมด'},
+          {v:'summary',label:'▤ ตารางเบิกยา'}, {v:'history',label:'↺ ประวัติรับยา'},
+          {v:'print',label:'⎙ พิมพ์ / PDF'} ];
 
 function sidebarHtml(){
   var h='<div class="sidebar no-print"><div class="logo">✚ จัดยาโดยพญาบี</div>';
@@ -1037,8 +1075,8 @@ function sidebarHtml(){
 
 /* ── bottom tabs ───────────────────────────────────────────── */
 function tabbarHtml(){
-  var items=[{ic:'⌂',label:'หน้าหลัก',v:'home'},{ic:'↺',label:'ประวัติ',v:'history'},
-             {fab:true,v:'form'},{ic:'▤',label:'เบิกยา',v:'summary'},{ic:'⎙',label:'พิมพ์',v:'print'}];
+  var items=[{ic:'⌂',label:'หน้าหลัก',v:'home'},{ic:'▦',label:'ปฏิทิน',v:'calendar'},
+             {fab:true,v:'form'},{ic:'▤',label:'เบิกยา',v:'summary'},{ic:'↺',label:'ประวัติ',v:'history'}];
   var h='<div class="tabbar no-print">';
   items.forEach(function(t){
     if(t.fab){ h+='<button class="fab" data-act="nav" data-v="form" aria-label="เพิ่มยา">＋</button>'; return; }
@@ -1520,6 +1558,86 @@ function summaryHtml(){
   return h+'</div></div>';
 }
 
+/* ── ปฏิทินยาหมด / วันเบิก ── */
+/* map: 'YYYY-MM-DD' -> [{m, kind:'out'|'rf'}] */
+function calEvents(){
+  var map={};
+  sortedMeds().forEach(function(m){
+    if(daysLeft(m)==null) return;                 /* ยาตามอาการ คำนวณไม่ได้ */
+    var out=outIso(m), rf=refillIso(m);
+    if(out){ (map[out]=map[out]||[]).push({m:m, kind:'out'}); }
+    if(rf && rf!==out){ (map[rf]=map[rf]||[]).push({m:m, kind:'rf'}); }
+  });
+  return map;
+}
+function calMonthOf(){ return S.calMonth || todayIso().slice(0,7); }
+
+function calendarHtml(){
+  var ym=calMonthOf(), y=+ym.slice(0,4), mo=+ym.slice(5,7);
+  var ev=calEvents(), today=todayIso();
+  var startDow=new Date(y,mo-1,1).getDay();
+  var nDays=new Date(y,mo,0).getDate();
+
+  var h='<div class="wide">'+
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:var(--sp-2)">'+
+      '<div><div style="font-size:22px;font-weight:700">ปฏิทินยาหมด</div>'+
+      '<div class="muted" style="font-size:13.5px;margin-top:2px">ยาของใครหมดวันไหน · ต้องไปเบิกวันไหน</div></div>'+
+      '<button class="btn btn-ghost no-print" data-act="calToday">วันนี้</button></div>';
+
+  h+='<div class="card" style="margin-top:14px">'+
+     '<div class="cal-bar" style="margin-top:0">'+
+       '<button class="cal-nav" data-act="calMove" data-n="-1" aria-label="เดือนก่อน">‹</button>'+
+       '<div class="mo">'+esc(TH_MON_F[mo-1]+' '+(y+543))+'</div>'+
+       '<button class="cal-nav" data-act="calMove" data-n="1" aria-label="เดือนถัดไป">›</button></div>'+
+     '<div class="cal-dows">'+TH_DOW.map(function(d){ return '<span>'+d+'</span>'; }).join('')+'</div>'+
+     '<div class="cal-grid">';
+
+  for(var i=0;i<startDow;i++) h+='<div class="cal-cell empty"></div>';
+  for(var day=1;day<=nDays;day++){
+    var iso=ym+'-'+String(day).padStart(2,'0');
+    var list=ev[iso]||[];
+    var cls='cal-cell'+(iso===today?' today':'')+(iso===S.calDay?' on':'');
+    var dots='';
+    list.slice(0,3).forEach(function(x){ dots+='<i class="'+x.kind+'"></i>'; });
+    h+='<button class="'+cls+'" data-act="calDay" data-d="'+iso+'" title="'+esc(fmtTh(iso))+'">'+
+       '<span class="d">'+day+'</span>'+
+       '<span class="cal-dots">'+dots+'</span></button>';
+  }
+  h+='</div>'+
+     '<div class="cal-legend"><span><i style="background:var(--req)"></i>ยาหมด</span>'+
+     '<span><i style="background:var(--amber)"></i>ต้องไปเบิก</span></div></div>';
+
+  /* รายการข้างล่าง — เลือกวันแล้วโชว์เฉพาะวันนั้น ไม่เลือกโชว์ทั้งเดือน */
+  var rows=[];
+  Object.keys(ev).forEach(function(iso){
+    if(S.calDay ? iso!==S.calDay : iso.slice(0,7)!==ym) return;
+    ev[iso].forEach(function(x){ rows.push({iso:iso, m:x.m, kind:x.kind}); });
+  });
+  rows.sort(function(a,b){
+    if(a.iso!==b.iso) return a.iso.localeCompare(b.iso);
+    return a.kind===b.kind ? 0 : (a.kind==='rf'?-1:1);
+  });
+
+  h+='<div class="sec-label" style="margin-top:var(--sp-5)">'+
+     esc(S.calDay ? fmtTh(S.calDay) : 'ทั้งเดือน '+TH_MON_F[mo-1])+' ('+rows.length+')'+
+     (S.calDay?' · <button class="btn btn-ghost" data-act="calDay" data-d="" style="padding:4px 10px;font-size:var(--fs-sm)">ดูทั้งเดือน</button>':'')+
+     '</div>';
+  h+='<div style="margin-top:var(--sp-2);display:flex;flex-direction:column;gap:var(--sp-2)">';
+  if(!rows.length){
+    h+='<div class="card muted" style="font-size:var(--fs-base)">'+
+       (S.calDay?'วันนี้ไม่มียาหมดหรือถึงคิวเบิก':'เดือนนี้ไม่มียาหมดหรือถึงคิวเบิก')+'</div>';
+  }
+  rows.forEach(function(r){
+    h+='<button class="cal-ev" data-act="open" data-id="'+esc(r.m.id)+'">'+
+       avatar(r.m.person,38)+
+       '<div class="bd"><div class="one" style="font-size:var(--fs-md);font-weight:600">'+esc(r.m.name)+'</div>'+
+       '<div class="one muted" style="font-size:var(--fs-cap)">'+
+         esc(fmtTh(r.iso)+' · '+r.m.person+' · '+rateText(r.m))+'</div></div>'+
+       '<span class="tag '+r.kind+'">'+(r.kind==='out'?'ยาหมด':'ต้องไปเบิก')+'</span></button>';
+  });
+  return h+'</div></div>';
+}
+
 /* ── print ─────────────────────────────────────────────────── */
 function printHtml(){
   var list=sortedMeds();
@@ -1963,6 +2081,14 @@ document.addEventListener('click',function(ev){
     case 'open':     readFormInputs(); go('detail',{selId:t.dataset.id}); break;
     case 'person':   go('person',{selPerson:t.dataset.ch}); break;
     case 'meal':     S.mealTab=t.dataset.m; render(); break;
+    case 'calDay':   S.calDay=(S.calDay===t.dataset.d)?'':t.dataset.d; render(); break;
+    case 'calMove': {
+      var ym=calMonthOf(), yy=+ym.slice(0,4), mm=+ym.slice(5,7)+(+t.dataset.n);
+      var dd=new Date(yy, mm-1, 1);
+      S.calMonth=dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0');
+      S.calDay=''; render(); break;
+    }
+    case 'calToday': S.calMonth=todayIso().slice(0,7); S.calDay=todayIso(); render(); break;
     case 'toggle':   toggleTaken(t.dataset.id, t.dataset.m); break;
     case 'addPerson':readFormInputs(); addPerson(); break;
     case 'receive':  receiveMed(t.dataset.id); break;
