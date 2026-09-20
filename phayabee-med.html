@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F3B36">
-<title>จัดยาโดยพญาบี v1.5</title>
+<title>จัดยาโดยพญาบี v1.6</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -335,6 +335,14 @@ textarea.inp{min-height:64px;resize:vertical;font-size:var(--fs-base)}
 .cal-ev .tag{font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:20px;flex:none;white-space:nowrap}
 .cal-ev .tag.out{background:#FEE2E2;color:#991B1B}
 .cal-ev .tag.rf{background:var(--amber-bg);color:var(--amber)}
+
+.person-card{display:flex;align-items:center;gap:var(--sp-4);flex-wrap:wrap}
+.person-card .who{flex:1;min-width:0}
+.person-card .act{flex:none}
+@media(max-width:480px){
+  .person-card .act{flex:1 1 100%;margin-top:var(--sp-1)}
+  .person-card .act .btn{width:100%;height:46px;border-radius:var(--r-md)}
+}
 .pav{width:46px;height:46px;border-radius:50%;border:1px solid var(--line-input);background:var(--card);
   display:flex;align-items:center;justify-content:center;font-weight:600;cursor:pointer;flex:none;overflow:hidden;padding:0}
 .pav.on{background:var(--teal);border-color:var(--teal);color:#fff}
@@ -440,7 +448,7 @@ textarea.inp{min-height:64px;resize:vertical;font-size:var(--fs-base)}
    หลังบ้าน: Google Apps Script → Google Sheet + Google Drive (รูปฉลากยา)
    ══════════════════════════════════════════════════════════════ */
 
-var VERSION  = 'v1.5';
+var VERSION  = 'v1.6';
 var API_URL  = 'https://script.google.com/macros/s/AKfycbze89lJ0Kd7Wk0a8Hz2jNE2RGJcqOOE6ODVFDen_Va45AJqkVOI_RH2s0oH8rRwnUXV/exec';
 var CACHE_KEY = 'bmed-cache-v1';
 var QUEUE_KEY = 'bmed-queue-v1';
@@ -1451,14 +1459,20 @@ function personHtml(){
     '<div class="card" style="margin-top:var(--sp-4)">ไม่พบสมาชิกคนนี้</div></div>';
 
   var list=medsOf(ch), warn=list.filter(isWarn);
-  var h='<div class="mid">'+pageHead('โปรไฟล์สมาชิก');
-  h+='<div class="card r20" style="margin-top:var(--sp-4);display:flex;align-items:center;gap:var(--sp-4)">'+
+  var owner=S.user && S.user.role==='owner';
+  var h='<div class="mid">'+pageHead('โปรไฟล์สมาชิก','', owner
+    ? '<button class="btn btn-ghost no-print" data-act="editPerson" data-ch="'+esc(ch)+'" '+
+        'style="flex:none">แก้ไข</button>'+
+      '<button class="btn btn-ghost no-print" data-act="delPerson" data-ch="'+esc(ch)+'" '+
+        'style="flex:none;color:var(--req);border-color:#F1C4C4;margin-left:var(--sp-2)">ลบ</button>'
+    : '');
+  h+='<div class="card r20 person-card" style="margin-top:var(--sp-4)">'+
      avatar(ch,64)+
-     '<div style="flex:1;min-width:0"><div style="font-size:var(--fs-xl);font-weight:700" class="one">คุณ '+esc(personLabel(p))+'</div>'+
+     '<div class="who"><div style="font-size:var(--fs-xl);font-weight:700" class="one">คุณ '+esc(personLabel(p))+'</div>'+
      '<div class="muted one" style="font-size:13.5px">'+list.length+' รายการยา'+
        (warn.length?' · ใกล้หมด '+warn.length+' รายการ':'')+'</div></div>'+
-     '<button class="btn btn-line no-print" data-act="sharePerson" data-ch="'+esc(ch)+'" '+
-       'style="border-radius:var(--r-md);flex:none">ส่งรายละเอียดยา</button></div>';
+     '<div class="act no-print"><button class="btn btn-line" data-act="sharePerson" data-ch="'+esc(ch)+'" '+
+       'style="border-radius:var(--r-md)">ส่งรายละเอียดยา</button></div></div>';
 
   if(warn.length){
     h+='<div class="alert-bar" style="margin-top:var(--sp-3);border-radius:var(--r-xl);padding:var(--sp-3) var(--sp-4);font-size:var(--fs-base)">'+
@@ -2025,6 +2039,54 @@ function useDoseModal(id,reason){
   });
 }
 
+function editPersonModal(ch){
+  var p=S.people.filter(function(x){ return x.char===ch; })[0]; if(!p) return;
+  var n=medsOf(ch).length;
+  openModal({
+    title:'แก้ไขชื่อสมาชิก',
+    sub: n ? ('เปลี่ยนชื่อแล้ว ยา '+n+' รายการของคนนี้จะย้ายตามให้อัตโนมัติ') : 'ชื่อที่โชว์บนวงกลมและในรายการยา',
+    fields:[{id:'name', label:'ชื่อที่แสดง', required:true, value:ch}],
+    okText:'บันทึก',
+    onOk:function(v){
+      var nu=String(v.name||'').trim().slice(0,8);
+      if(!nu){ toast('กรุณาใส่ชื่อ'); return false; }
+      if(nu===ch){ closeModal(); return true; }
+      if(S.people.some(function(x){ return x.char===nu; })){ toast('มีสมาชิกชื่อนี้แล้ว'); return false; }
+
+      closeModal();
+      p.char=nu; p.name=nu;
+      S.meds.forEach(function(m){ if(m.person===ch) m.person=nu; });
+      if(S.selPerson===ch) S.selPerson=nu;
+      saveCache(); render();
+      toast('เปลี่ยนชื่อเป็น "'+nu+'" แล้ว');
+      send({action:'updatePerson', char:ch, newChar:nu});
+      return true;
+    }
+  });
+}
+
+function confirmDelPerson(ch){
+  var p=S.people.filter(function(x){ return x.char===ch; })[0]; if(!p) return;
+  var n=medsOf(ch).length;
+  openModal({
+    title:'ลบสมาชิก "'+ch+'"?',
+    sub: n ? ('ยา '+n+' รายการของคนนี้จะถูกเอาออกจากรายการด้วย · ประวัติทั้งหมดยังอยู่ในชีท')
+           : 'ยังไม่มียาของคนนี้ ลบได้เลย',
+    okText:'ลบสมาชิก', cancelText:'ยกเลิก',
+    onOk:function(){
+      closeModal();
+      S.people=S.people.filter(function(x){ return x.char!==ch; });
+      S.meds=S.meds.filter(function(m){ return m.person!==ch; });
+      S.selPerson=null;
+      saveCache();
+      navTo('home');
+      toast('ลบสมาชิก "'+ch+'" แล้ว');
+      send({action:'deletePerson', char:ch});
+      return true;
+    }
+  });
+}
+
 function confirmDelMed(id){
   var m=findMed(id); if(!m) return;
   openModal({
@@ -2091,6 +2153,8 @@ document.addEventListener('click',function(ev){
     case 'calToday': S.calMonth=todayIso().slice(0,7); S.calDay=todayIso(); render(); break;
     case 'toggle':   toggleTaken(t.dataset.id, t.dataset.m); break;
     case 'addPerson':readFormInputs(); addPerson(); break;
+    case 'editPerson': editPersonModal(t.dataset.ch); break;
+    case 'delPerson':  confirmDelPerson(t.dataset.ch); break;
     case 'receive':  receiveMed(t.dataset.id); break;
     case 'useDose':  useDoseModal(t.dataset.id, t.dataset.r); break;
     case 'print':    window.print(); break;
